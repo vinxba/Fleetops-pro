@@ -196,7 +196,7 @@ export default function Dashboard() {
               <button className="w-full mt-6 text-center text-xs font-bold text-blue-600 hover:text-blue-700 transition border-t border-slate-100 pt-4 uppercase tracking-wider">
                 View All Activity
               </button>
-            </div>
+            </div>  
 
           </div>
         </div>

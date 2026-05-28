@@ -3,33 +3,42 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FleetOverview from './pages/FleetOverview';
 import ServiceEntry from './pages/ServiceEntry';
+import ReportsPage from './pages/ReportsPage';
+import FleetPage from './pages/FleetPage';
+import LoginPage from './pages/LoginPage';
 
 export default function App() {
-  // Navigation states: 'Dashboard' or 'Service Entry'
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState('Dashboard');
 
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+  }
+
   return (
-    <div className="bg-[#f8fafc] text-slate-800 h-screen flex flex-col overflow-hidden antialiased">
-      {/* Shared Navbar Component */}
+    <div className="bg-[#f8fafc] text-slate-800 h-screen flex flex-col overflow-hidden antialiased"> 
       <Navbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Shared Sidebar Component */}
-        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} setIsLoggedIn={setIsLoggedIn} />
 
-        {/* Dynamic Workspace Switcher */}
-        <div className="flex-1 overflow-y-auto">
-          {currentPage === 'Dashboard' && (
-            <FleetOverview navigateToService={() => setCurrentPage('Service Entry')} />
-          )}
-          {currentPage === 'Service Entry' && <ServiceEntry />}
-          {['Fleet', 'Reports'].includes(currentPage) && (
-            <div className="p-8 text-center text-slate-400 mt-20">
-              <span className="text-4xl block mb-2">🚧</span>
-              <h2 className="text-xl font-bold text-slate-700">{currentPage} Module</h2>
-              <p className="text-sm mt-1">This workspace view is currently under construction.</p>
-            </div>
-          )}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            {currentPage === 'Dashboard' && (
+              <FleetOverview navigateToService={() => setCurrentPage('Service Entry')} />
+            )}
+            {currentPage === 'Service Entry' && <ServiceEntry />}
+            {currentPage === 'Reports' && <ReportsPage />}
+            {currentPage === 'Fleet' && <FleetPage />}
+          </div>
+
+          {/* Global Application Footer */}
+          <footer className="bg-white border-t border-slate-200 px-6 py-3 flex items-center justify-center shrink-0">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">
+              Proprietary Dashboard Interface <span className="mx-2 text-slate-200">|</span> Powered by <span className="text-blue-600">Careergize</span>
+            </p>
+          </footer>
         </div>
       </div>
     </div>

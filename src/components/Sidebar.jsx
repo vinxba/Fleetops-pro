@@ -1,7 +1,7 @@
 import React from 'react';
-import { LayoutDashboard, Truck, Wrench, BarChart3, User } from 'lucide-react';
+import { LayoutDashboard, Truck, Wrench, BarChart3, LogOut } from 'lucide-react';
 
-export default function Sidebar({ currentPage, setCurrentPage }) {
+export default function Sidebar({ currentPage, setCurrentPage, setIsLoggedIn }) {
   const items = [
     { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'Fleet', label: 'Fleet', icon: Truck },
@@ -47,11 +47,19 @@ export default function Sidebar({ currentPage, setCurrentPage }) {
             );
           })}
         </nav>
+
+        {/* Logout Button */}
+        <button
+          onClick={() => setIsLoggedIn(false)}
+          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-bold tracking-wide transition text-left text-red-500 hover:bg-red-50 hover:text-red-700 mt-4"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          <span>Logout</span>
+        </button>
+
       </div>
       
-      <div className="p-4 text-[10px] font-bold text-slate-400 border-t border-slate-200 bg-[#f8fafc]">
-        System Status: Active Operational v2.4.1
-      </div>
+      
     </aside>
   );
 } 

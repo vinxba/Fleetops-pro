@@ -35,13 +35,13 @@ export default function Navbar({ currentPage, setCurrentPage }) {
         </nav>
         
         {/* Profile Avatar Frame Link */}
-        <div className="flex items-center">
+        {/* <div className="flex items-center">
           <img 
             className="h-9 w-9 rounded-md object-cover ring-2 ring-slate-100 cursor-pointer" 
             src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" 
             alt="Fleet controller supervisor profile layout avatar" 
           />
-        </div>
+        </div> */}
       </div>
     </header>
   );
