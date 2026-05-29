@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Search, Plus, Download, Filter, MoreVertical, RotateCcw, Settings, Truck, HelpCircle } from 'lucide-react';
 
 // Import local images
-import tankerImage from '../assets/images/tanker.jpg';
+import MitsubishiL200 from '../assets/images/MitsubishiL200.jpg';
+import tankerImage from '../assets/images/MitsubishiL200.jpg';
 import commercialVanImage from '../assets/images/commercial_van.jpg';
 import landCruiserImage from '../assets/images/land_cruiser.jpg';
 import logisticsHaulerImage from '../assets/images/logistics_hauler.jpg';
@@ -21,11 +22,11 @@ export default function FleetPage({ vehiclesData }) {
 
   const fleetAssets = [
     {
-      id: 'FLT-992-TX',
-      type: 'Heavy Duty Tanker',
-      subtext: '12 WHEELER',
+      id: 'KWT-56888',
+      type: 'Mitsubishi L200',
+      subtext: 'DOUBLE CAB PICKUP',
       status: 'READY',
-      image: tankerImage,
+      image: MitsubishiL200,
       metrics: [
         { label: 'CURRENT MILEAGE', value: '142,500 KM' },
         { label: 'FUEL LEVEL', value: '85%', progress: 85, progressColor: 'bg-emerald-600' }
@@ -34,6 +35,8 @@ export default function FleetPage({ vehiclesData }) {
       footerRight: 'actions',
       iconBg: 'bg-blue-50 text-blue-600'
     },
+
+
     {
       id: 'V-202-LHD',
       type: 'Commercial Van',
