@@ -1,5 +1,5 @@
 import React from 'react';
-import { Upload, Info, FileText, Calendar, ShieldCheck } from 'lucide-react';
+import { Upload, Info, FileText, Calendar, ShieldCheck, MapPin, Camera, AlertCircle } from 'lucide-react';
 
 export default function ServiceEntry() {
   const commonItems = [
@@ -28,7 +28,7 @@ export default function ServiceEntry() {
               <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Vehicle Selection</label>
               <div className="relative">
                 <select className="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none appearance-none cursor-pointer">
-                  <option>🔍 Select Asset (Name or Plate #)</option>
+                
                   <option>FR-092 - Freightliner Cascadia</option>
                   <option>VN-104 - Volvo VNL 860</option>
                 </select>
@@ -93,6 +93,61 @@ export default function ServiceEntry() {
             </div>
           </div>
 
+          {/* Breakdown / Accident Details Panel */}
+          <div className="bg-white border border-slate-200/70 shadow-sm rounded-xl p-5 space-y-5">
+            <div className="flex items-center space-x-2 border-b border-slate-100 pb-2">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <h3 className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Breakdown / Accident Details</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Breakdown Location</label>
+                <div className="relative flex items-center">
+                  <MapPin className="absolute left-3 h-4 w-4 text-slate-400" />
+                  <input type="text" placeholder="GPS or Location Name" className="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-2.5 pl-10 text-xs font-semibold text-slate-700 outline-none focus:border-blue-300 transition" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Cause</label>
+                <input type="text" placeholder="Reason for breakdown" className="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-blue-300 transition" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Insurance Claim Status</label>
+                <select className="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none cursor-pointer focus:border-blue-300 transition">
+                  <option>No Claim Required</option>
+                  <option>Pending Filing</option>
+                  <option>Claim Filed</option>
+                  <option>Settled</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Accident Images</label>
+                <button type="button" className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs font-bold text-slate-600 flex items-center justify-center hover:bg-slate-100 transition">
+                  <Camera className="h-4 w-4 mr-2" /> Upload Incident Photos
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Driver Remarks</label>
+              <textarea placeholder="Specific details from the driver regarding the incident..." rows="2" className="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-3 text-xs font-semibold text-slate-700 outline-none resize-none focus:border-blue-300 transition"></textarea>
+            </div>
+          </div>
+
+          {/* Form Action Controls */}
+          <div className="flex items-center justify-center space-x-4 pt-4">
+            <button type="button" className="px-8 py-4 bg-white border border-slate-200 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-50 transition cursor-pointer active:scale-95">
+              Save Draft
+            </button>
+            <button type="submit" className="px-10 py-4 bg-[#0f2d4a] text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-blue-900/10 hover:-translate-y-1 transition active:scale-95 cursor-pointer">
+              Complete Service Entry
+            </button>
+          </div>
+
         </div>
 
         {/* Right Side Info Cards Column Layout */}
@@ -117,25 +172,8 @@ export default function ServiceEntry() {
             </div>
           </div>
 
-          {/* Blue Compliance Information Card Box Layout */}
-          <div className="bg-blue-50/60 border border-blue-100/80 rounded-xl p-5 text-blue-900 space-y-2">
-            <div className="flex items-center space-x-2 font-bold text-sm">
-              <Info className="h-4 w-4 text-blue-600 shrink-0" />
-              <h4 className="text-xs uppercase tracking-wider text-blue-900 font-bold">Compliance Note</h4>
-            </div>
-            <p className="text-[11px] font-medium leading-relaxed text-blue-800">
-              Recording precise odometer readings is critical for IFTA compliance and predictive maintenance scheduling. Ensure the captured value matches the physical dashboard reading.
-            </p>
-          </div>
+          
 
-          {/* Under-Construction Facility Footer Frame */}
-          <div className="rounded-xl overflow-hidden relative group border border-slate-200/60 shadow-sm">
-            <img className="h-28 w-full object-cover group-hover:scale-105 transition duration-500" src="https://images.unsplash.com/photo-1516515429572-bf32372f2409?auto=format&fit=crop&w=400&q=80" alt="Maintenance depot bay layout facility infrastructure" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/20 p-3 flex flex-col justify-end">
-              <span className="text-[9px] font-bold text-slate-300 flex items-center uppercase tracking-wider"><ShieldCheck className="h-3 w-3 mr-1 text-green-400" /> Standardized Facility</span>
-              <h4 className="text-[11px] font-bold text-white leading-tight mt-0.5">Maintenance Facility - Zone A</h4>
-            </div>
-          </div>
 
         </div>
 

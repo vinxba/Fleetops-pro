@@ -1,16 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Download, Route, CircleDollarSign, Clock3, TrendingUp, 
   TrendingDown, Percent, Filter, Search, Truck 
 } from 'lucide-react';
 
 export default function ReportsPage() {
+  const [selectedVehicle, setSelectedVehicle] = useState('All Vehicles');
   const months = ['MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT'];
   
-  const vehicleData = [
-    { id: '#402-VFH', name: 'VOLVO FH 500', totalKm: '14,200', fuel: '3,850', events: 2, downtime: '12h', cost: '$1,850.00', status: 'OPERATIONAL' },
-    { id: '#511-SCA', name: 'SCANIA R450', totalKm: '12,150', fuel: '3,200', events: 1, downtime: '4h', cost: '$920.00', status: 'SERVICE DUE' }
+  const vehicleStats = [
+    { id: '#402-VFH', name: 'VOLVO FH 500', totalKm: 14200, fuel: 3850, events: 2, downtime: 12, cost: 1850.00, status: 'OPERATIONAL', trends: [45, 55, 40, 60, 75, 90] },
+    { id: '#511-SCA', name: 'SCANIA R450', totalKm: 12150, fuel: 3200, events: 1, downtime: 4, cost: 920.00, status: 'SERVICE DUE', trends: [55, 45, 60, 40, 65, 50] },
+    { id: '#202-LHD', name: 'COMMERCIAL VAN', totalKm: 8400, fuel: 1100, events: 0, downtime: 0, cost: 0.00, status: 'OPERATIONAL', trends: [20, 25, 22, 28, 30, 35] },
+    { id: '#LC-881', name: 'LAND CRUISER 79', totalKm: 1200, fuel: 450, events: 1, downtime: 48, cost: 550.00, status: 'IN REPAIR', trends: [10, 15, 12, 18, 5, 2] }
   ];
+
+  const filteredData = selectedVehicle === 'All Vehicles' 
+    ? vehicleStats 
+    : vehicleStats.filter(v => `${v.id} - ${v.name}` === selectedVehicle);
+
+  const summary = {
+    totalKm: filteredData.reduce((sum, v) => sum + v.totalKm, 0),
+    totalCost: filteredData.reduce((sum, v) => sum + v.cost, 0),
+    totalDowntime: filteredData.reduce((sum, v) => sum + v.downtime, 0),
+    chartData: selectedVehicle === 'All Vehicles' 
+      ? [75, 85, 65, 90, 95, 100] // Aggregate Fleet View
+      : filteredData[0].trends
+  };
 
   return (
     <div className="p-6 lg:p-8 space-y-6 bg-[#f8fafc] select-none">
@@ -30,10 +46,15 @@ export default function ReportsPage() {
       <div className="bg-[#eef2f6]/60 border border-slate-200/50 rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-end gap-4 justify-end">
         <div className="w-full md:w-64 space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Vehicle</label>
-          <select className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none cursor-pointer">
+          <select 
+            value={selectedVehicle}
+            onChange={(e) => setSelectedVehicle(e.target.value)}
+            className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+          >
             <option>All Vehicles</option>
-            <option>#402-VFH - Volvo FH 500</option>
-            <option>#511-SCA - Scania R450</option>
+            {vehicleStats.map(v => (
+              <option key={v.id}>{v.id} - {v.name}</option>
+            ))}
           </select>
         </div>
         <div className="w-full md:w-64 space-y-1.5">
@@ -60,7 +81,7 @@ export default function ReportsPage() {
           </div>
           <div className="mt-4">
             <div className="flex items-baseline space-x-1">
-              <span className="text-3xl font-bold text-slate-950">124,802</span>
+              <span className="text-3xl font-bold text-slate-950">{summary.totalKm.toLocaleString()}</span>
               <span className="text-xs font-bold text-blue-600">KM</span>
             </div>
             <span className="text-[11px] font-bold text-green-600 flex items-center mt-2">
@@ -77,7 +98,7 @@ export default function ReportsPage() {
           </div>
           <div className="mt-4">
             <div className="flex items-baseline space-x-1">
-              <span className="text-3xl font-bold text-amber-600">$42,150</span>
+              <span className="text-3xl font-bold text-amber-600">${summary.totalCost.toLocaleString()}</span>
               <span className="text-xs font-bold text-slate-400">USD</span>
             </div>
             <span className="text-[11px] font-bold text-red-500 flex items-center mt-2">
@@ -95,14 +116,14 @@ export default function ReportsPage() {
           <div className="mt-4">
             <div className="flex items-center space-x-2">
               <div className="flex items-baseline space-x-0.5">
-                <span className="text-3xl font-bold text-slate-950">142</span>
+                <span className="text-3xl font-bold text-slate-950">{summary.totalDowntime}</span>
                 <span className="text-xs font-bold text-slate-500">HRS</span>
               </div>
               <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden max-w-[80px]">
-                <div className="bg-red-500 h-full rounded-full" style={{ width: '65%' }}></div>
+                <div className="bg-red-500 h-full rounded-full" style={{ width: `${Math.min(summary.totalDowntime / 2, 100)}%` }}></div>
               </div>
             </div>
-            <span className="text-[11px] font-medium text-slate-400 block mt-2">Avg. 4.4 hrs per vehicle</span>
+            <span className="text-[11px] font-medium text-slate-400 block mt-2">{selectedVehicle === 'All Vehicles' ? `Avg. ${(summary.totalDowntime / vehicleStats.length).toFixed(1)} hrs per vehicle` : 'Cumulative downtime for period'}</span>
           </div>
         </div>
       </div>
@@ -122,7 +143,7 @@ export default function ReportsPage() {
           
           {/* Abstract Vector Simulated Dashboard Bar Graph Alignments */}
           <div className="flex-1 flex items-end justify-between px-4 pt-10 pb-2">
-            {[45, 55, 40, 60, 75, 90].map((height, i) => (
+            {summary.chartData.map((height, i) => (
               <div key={i} className="flex flex-col items-center flex-1 group max-w-[45px]">
                 <div className="w-full bg-[#0f4c81] rounded-t-sm transition duration-300 group-hover:bg-blue-900" style={{ height: `${height * 1.8}px` }}></div>
                 <span className="text-[10px] font-bold text-slate-400 mt-3 block tracking-wide">{months[i]}</span>
@@ -182,7 +203,7 @@ export default function ReportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
-              {vehicleData.map((row, idx) => (
+              {filteredData.map((row, idx) => (
                 <tr key={idx} className="hover:bg-slate-50/40 transition">
                   <td className="py-4 px-5 flex items-center space-x-3">
                     <div className="bg-blue-50 text-blue-600 p-2 rounded-lg border border-blue-100 shadow-sm">
@@ -193,11 +214,11 @@ export default function ReportsPage() {
                       <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{row.name}</p>
                     </div>
                   </td>
-                  <td className="py-4 px-5 font-semibold text-slate-600">{row.totalKm}</td>
-                  <td className="py-4 px-5 font-semibold text-slate-600">{row.fuel}</td>
+                  <td className="py-4 px-5 font-semibold text-slate-600">{row.totalKm.toLocaleString()}</td>
+                  <td className="py-4 px-5 font-semibold text-slate-600">{row.fuel.toLocaleString()}</td>
                   <td className="py-4 px-5 font-semibold text-slate-600">{row.events}</td>
-                  <td className="py-4 px-5 font-bold text-red-500/90">{row.downtime}</td>
-                  <td className="py-4 px-5 text-slate-900">{row.cost}</td>
+                  <td className="py-4 px-5 font-bold text-red-500/90">{row.downtime}h</td>
+                  <td className="py-4 px-5 text-slate-900">${row.cost.toLocaleString()}</td>
                   <td className="py-4 px-5 text-right">
                     <span className={`text-[9px] font-bold tracking-wider px-2.5 py-1 rounded-md ${
                       row.status === 'OPERATIONAL' 

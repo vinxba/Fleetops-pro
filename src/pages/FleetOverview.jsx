@@ -26,7 +26,7 @@ export default function FleetOverview({ navigateToService }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div className="bg-white p-5 rounded-xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            <span>Active Units</span>
+            <span>Active Vehicles</span>
             <CheckCircle2 className="text-green-500 h-4 w-4" />
           </div>
           <div className="mt-3 flex items-baseline">

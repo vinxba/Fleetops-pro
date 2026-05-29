@@ -1,10 +1,11 @@
 import React from 'react';
-import { LayoutDashboard, Truck, Wrench, BarChart3, LogOut } from 'lucide-react';
+import { LayoutDashboard, Truck, Wrench, BarChart3, LogOut, Package } from 'lucide-react';
 
 export default function Sidebar({ currentPage, setCurrentPage, setIsLoggedIn }) {
   const items = [
     { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'Fleet', label: 'Fleet', icon: Truck },
+    { id: 'Parts', label: 'Parts', icon: Package },
     { id: 'Service Entry', label: 'Service Entry', icon: Wrench, borderDashed: true },
     { id: 'Reports', label: 'Reports', icon: BarChart3 },
   ];

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Truck } from 'lucide-react';
+import { Truck, Bell } from 'lucide-react';
 
 export default function Navbar({ currentPage, setCurrentPage }) {
   const tabs = ['Dashboard', 'Fleet', 'Reports'];
@@ -34,6 +34,15 @@ export default function Navbar({ currentPage, setCurrentPage }) {
           ))}
         </nav>
         
+        {/* Notification Bell Control */}
+        <div className="relative group cursor-pointer">
+          <div className="p-2 rounded-xl text-slate-400 group-hover:bg-slate-50 group-hover:text-blue-600 transition-all duration-300">
+            <Bell size={20} />
+          </div>
+          {/* Active Status Badge */}
+          <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 border-2 border-white rounded-full shadow-sm group-hover:scale-110 transition-transform"></span>
+        </div>
+
         {/* Profile Avatar Frame Link */}
         {/* <div className="flex items-center">
           <img 

@@ -6,10 +6,12 @@ import ServiceEntry from './pages/ServiceEntry';
 import ReportsPage from './pages/ReportsPage';
 import FleetPage from './pages/FleetPage';
 import LoginPage from './pages/LoginPage';
+import PartsPage from './pages/PartsPage';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState('Dashboard');
+  const [targetVehicleId, setTargetVehicleId] = useState(null);
 
   if (!isLoggedIn) {
     return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
@@ -28,9 +30,22 @@ export default function App() {
             {currentPage === 'Dashboard' && (
               <FleetOverview navigateToService={() => setCurrentPage('Service Entry')} />
             )}
+            {currentPage === 'Parts' && (
+              <PartsPage 
+                onVehicleClick={(vehicleName) => {
+                  setTargetVehicleId(vehicleName);
+                  setCurrentPage('Fleet');
+                }} 
+              />
+            )}
             {currentPage === 'Service Entry' && <ServiceEntry />}
             {currentPage === 'Reports' && <ReportsPage />}
-            {currentPage === 'Fleet' && <FleetPage />}
+            {currentPage === 'Fleet' && (
+              <FleetPage 
+                initialVehicleId={targetVehicleId} 
+                onClearSelection={() => setTargetVehicleId(null)} 
+              />
+            )}
           </div>
 
           {/* Global Application Footer */}
