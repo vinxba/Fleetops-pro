@@ -1,18 +1,18 @@
 import React from 'react';
-import { Truck, Bell } from 'lucide-react';
+import { Truck, Bell, Moon, Sun } from 'lucide-react';
 
-export default function Navbar({ currentPage, setCurrentPage }) {
+export default function Navbar({ currentPage, setCurrentPage, theme, setTheme }) {
   const tabs = ['Dashboard', 'Fleet', 'Reports'];
 
   return (
-    <header className="bg-white border-b border-slate-200 h-16 min-h-16 flex items-center justify-between px-6 z-30 select-none">
+    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 h-16 min-h-16 flex items-center justify-between px-6 z-30 select-none">
       {/* Brand Identity Branding Logo */}
       <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setCurrentPage('Dashboard')}>
         <div className="bg-blue-600 text-white p-1.5 rounded-lg">
           <Truck className="h-5 w-5" />
         </div>
-        <span className="font-bold text-xl text-[#082f49] tracking-tight">
-          FleetOps <span className="text-blue-600">Pro</span>
+        <span className="font-bold text-xl text-slate-900 dark:text-slate-50 tracking-tight">
+          FleetOps <span className="text-blue-600 dark:text-blue-300">Pro</span>
         </span>
       </div>
       
@@ -25,8 +25,8 @@ export default function Navbar({ currentPage, setCurrentPage }) {
               onClick={() => setCurrentPage(tab)}
               className={`px-3 py-1.5 rounded-md border transition ${
                 currentPage === tab
-                  ? 'text-blue-600 border-dashed border-blue-400 bg-blue-50/40'
-                  : 'text-slate-500 border-transparent hover:text-slate-800'
+                  ? 'text-blue-600 border-dashed border-blue-400 bg-blue-50/40 dark:text-blue-300 dark:border-blue-500 dark:bg-slate-800/70'
+                  : 'text-slate-500 border-transparent hover:text-slate-800 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800'
               }`}
             >
               {tab}
@@ -34,9 +34,19 @@ export default function Navbar({ currentPage, setCurrentPage }) {
           ))}
         </nav>
         
+        {/* Theme Toggle Control */}
+        <button
+          type="button"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:bg-slate-800 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-all duration-300"
+          aria-label="Toggle dark mode"
+        >
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+
         {/* Notification Bell Control */}
         <div className="relative group cursor-pointer">
-          <div className="p-2 rounded-xl text-slate-400 group-hover:bg-slate-50 group-hover:text-blue-600 transition-all duration-300">
+          <div className="p-2 rounded-xl text-slate-400 group-hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 group-hover:text-blue-600 dark:text-slate-300 dark:group-hover:bg-slate-800 dark:group-hover:text-blue-300 transition-all duration-300">
             <Bell size={20} />
           </div>
           {/* Active Status Badge */}

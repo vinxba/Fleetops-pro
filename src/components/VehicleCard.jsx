@@ -1,6 +1,6 @@
 const VehicleCard = ({ vehicle }) => {
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition">
+    <div className="bg-white dark:bg-slate-950 rounded-xl p-5 shadow-sm hover:shadow-lg transition">
 
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-lg">

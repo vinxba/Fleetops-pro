@@ -41,22 +41,22 @@ export default function PartsPage({ onVehicleClick }) {
   });
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-[#f8fafc] w-full select-none animate-in fade-in duration-500">
+    <div className="p-6 lg:p-8 space-y-6 bg-slate-50 dark:bg-slate-950 w-full select-none animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f2d4a] tracking-tight">Parts Inventory</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Parts Inventory</h1>
           <p className="text-xs text-slate-400 mt-0.5 font-medium">Manage and track fleet maintenance components</p>
         </div>
         
         <div className="flex items-center space-x-2.5 self-start sm:self-auto">
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#0b4d82] hover:bg-blue-900 text-white text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-lg shadow-sm flex items-center transition cursor-pointer"
+            className="bg-blue-950 hover:bg-blue-900 text-white text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-lg shadow-sm flex items-center transition cursor-pointer"
           >
             <Plus className="mr-1.5 h-4 w-4" /> Add Part
           </button>
-          <button className="bg-white hover:bg-slate-50 text-slate-600 text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center transition cursor-pointer">
+          <button className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center transition cursor-pointer">
             <Download className="mr-1.5 h-4 w-4 text-slate-400" /> Export CSV
           </button>
         </div>
@@ -64,21 +64,21 @@ export default function PartsPage({ onVehicleClick }) {
 
       {/* Numerical Metric Grid Row - Dashboard Style */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
             <span>Total Inventory</span>
             <Package className="text-blue-500 h-4 w-4" />
           </div>
           <div className="mt-4 flex items-baseline">
-            <span className="text-4xl font-black text-[#0f2d4a] tracking-tighter">{totalParts}</span>
+            <span className="text-4xl font-black text-slate-900 tracking-tighter">{totalParts}</span>
             <span className="text-xs font-bold text-slate-400 ml-2">Unique SKUs</span>
           </div>
-          <div className="w-full bg-slate-100 h-1.5 rounded-full mt-5 overflow-hidden">
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-5 overflow-hidden">
             <div className="bg-blue-600 h-full rounded-full" style={{ width: '100%' }}></div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
             <span>Healthy Stock</span>
             <CheckCircle2 className="text-emerald-500 h-4 w-4" />
@@ -87,12 +87,12 @@ export default function PartsPage({ onVehicleClick }) {
             <span className="text-4xl font-black text-emerald-600 tracking-tighter">{inStockCount}</span>
             <span className="text-xs font-bold text-slate-400 ml-2">Available</span>
           </div>
-          <div className="w-full bg-slate-100 h-1.5 rounded-full mt-5 overflow-hidden">
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-5 overflow-hidden">
             <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${(inStockCount / totalParts) * 100}%` }}></div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
             <span>Attention Required</span>
             <AlertTriangle className="text-red-500 h-4 w-4" />
@@ -101,7 +101,7 @@ export default function PartsPage({ onVehicleClick }) {
             <span className="text-4xl font-black text-red-600 tracking-tighter">{lowStockCount}</span>
             <span className="text-xs font-bold text-slate-400 ml-2">Low / Empty</span>
           </div>
-          <div className="w-full bg-slate-100 h-1.5 rounded-full mt-5 overflow-hidden">
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-5 overflow-hidden">
             <div className="bg-red-500 h-full rounded-full" style={{ width: `${(lowStockCount / totalParts) * 100}%` }}></div>
           </div>
         </div>
@@ -119,7 +119,7 @@ export default function PartsPage({ onVehicleClick }) {
           />
           <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
         </div>
-        <button className="bg-white border border-slate-200 text-slate-600 p-3 rounded-xl hover:bg-slate-50 transition shadow-sm cursor-pointer">
+        <button className="bg-white dark:bg-slate-800 border border-slate-200 text-slate-600 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm cursor-pointer">
           <Filter size={18} />
         </button>
       </div>
@@ -133,8 +133,8 @@ export default function PartsPage({ onVehicleClick }) {
             onClick={() => setActiveFilter(tab.value)}
             className={`px-3 py-1.5 rounded-md uppercase font-bold transition cursor-pointer text-[10px] tracking-wide ${
               activeFilter === tab.value
-                ? 'bg-[#005cb2] text-white shadow-sm'
-                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800'
             }`}
           >
             {tab.label}
@@ -146,11 +146,11 @@ export default function PartsPage({ onVehicleClick }) {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Parts Table */}
         <div className="xl:col-span-2">
-          <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden h-full">
+          <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden h-full">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                  <tr className="bg-slate-50/50 dark:bg-slate-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-700">
                     <th className="py-4 px-6">Part Information</th>
                     <th className="py-4 px-6">Category</th>
                     <th className="py-4 px-6">Stock Level</th>
@@ -161,10 +161,10 @@ export default function PartsPage({ onVehicleClick }) {
                 </thead>
                 <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-600">
                   {filteredParts.map((part, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/30 transition group">
+                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition group">
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-[#0f2d4a] group-hover:text-white transition-colors">
+                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-slate-950 group-hover:text-white transition-colors">
                             <Package size={16} />
                           </div>
                           <div>
@@ -198,12 +198,12 @@ export default function PartsPage({ onVehicleClick }) {
 
         {/* Parts Used History Sidebar */}
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-slate-200/60 p-8 shadow-sm h-full">
+          <div className="bg-white dark:bg-slate-950 rounded-3xl border border-slate-200/60 p-8 shadow-sm h-full">
             <div className="flex items-center space-x-3 mb-8">
               <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
                 <History size={20} />
               </div>
-              <h3 className="text-lg font-black text-[#0f2d4a] tracking-tight">Used History</h3>
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">Used History</h3>
             </div>
             
             <div className="space-y-6">
@@ -211,9 +211,9 @@ export default function PartsPage({ onVehicleClick }) {
                 <div 
                   key={idx} 
                   onClick={() => onVehicleClick?.(item.vehicle)}
-                  className="relative pl-6 border-l-2 border-slate-100 pb-1 cursor-pointer group/item hover:border-blue-500 transition-colors"
+                  className="relative pl-6 border-l-2 border-slate-100 dark:border-slate-700 pb-1 cursor-pointer group/item hover:border-blue-500 transition-colors"
                 >
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-blue-500 rounded-full"></div>
+                  <div className="absolute -left-2.25 top-0 w-4 h-4 bg-white border-2 border-blue-500 rounded-full"></div>
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{item.date}</span>
                   <h4 className="font-bold text-sm text-slate-800 leading-tight group-hover/item:text-blue-600 transition-colors">{item.part}</h4>
                   <div className="flex items-center space-x-2 mt-2">
@@ -225,7 +225,7 @@ export default function PartsPage({ onVehicleClick }) {
               ))}
             </div>
             
-            <button className="w-full mt-8 py-3.5 bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-100 transition cursor-pointer">
+            <button className="w-full mt-8 py-3.5 bg-slate-50 dark:bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-100 dark:bg-slate-800 transition cursor-pointer">
               View Full Usage Log
             </button>
           </div>
@@ -235,14 +235,14 @@ export default function PartsPage({ onVehicleClick }) {
       {/* Add Part Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" onClick={() => setIsAddModalOpen(false)}>
-          <div className="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
             <div className="p-8 lg:p-10">
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h2 className="text-2xl font-black text-[#0f2d4a] tracking-tighter">Add New Part</h2>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Add New Part</h2>
                   <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Inventory Management</p>
                 </div>
-                <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-xl transition text-slate-400 cursor-pointer">
+                <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-xl transition text-slate-400 cursor-pointer">
                   <X size={20} />
                 </button>
               </div>
@@ -250,20 +250,20 @@ export default function PartsPage({ onVehicleClick }) {
               <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setIsAddModalOpen(false); }}>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Part Name</label>
-                  <input type="text" placeholder="e.g. Brake Pads (Front)" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                  <input type="text" placeholder="e.g. Brake Pads (Front)" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">SKU / ID</label>
-                    <input type="text" placeholder="SKU-8822" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                    <input type="text" placeholder="SKU-8822" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Price (Unit)</label>
-                    <input type="number" step="0.01" placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                    <input type="number" step="0.01" placeholder="0.00" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
                   </div>
                 </div>
                 <div className="pt-6 flex space-x-3">
-                  <button type="submit" className="flex-1 bg-[#0f2d4a] text-white text-[10px] font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition active:scale-95 cursor-pointer">Add Part</button>
+                  <button type="submit" className="flex-1 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition active:scale-95 cursor-pointer">Add Part</button>
                 </div>
               </form>
             </div>

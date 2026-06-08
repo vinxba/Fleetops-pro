@@ -29,7 +29,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-[#f8fafc] select-none">
+    <div className="p-6 lg:p-8 space-y-6 bg-slate-50 dark:bg-slate-950 select-none">
       
       {/* Page Title & Main Header Export Control */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -43,7 +43,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Filter Control Ribbon Panel */}
-      <div className="bg-[#eef2f6]/60 border border-slate-200/50 rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-end gap-4 justify-end">
+      <div className="bg-slate-100 dark:bg-slate-800/60 border border-slate-200/50 rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-end gap-4 justify-end">
         <div className="w-full md:w-64 space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Vehicle</label>
           <select 
@@ -65,7 +65,7 @@ export default function ReportsPage() {
             <option>Quarter 3 2023</option>
           </select>
         </div>
-        <button className="bg-[#0f4c81] hover:bg-blue-900 text-white p-2.5 rounded-lg flex items-center justify-center transition cursor-pointer">
+        <button className="bg-blue-900 hover:bg-blue-900 text-white p-2.5 rounded-lg flex items-center justify-center transition cursor-pointer">
           <Filter className="h-4 w-4" />
         </button>
       </div>
@@ -74,7 +74,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         
         {/* Total Distance Card */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             <span>Total Distance</span>
             <Route className="text-blue-500 h-5 w-5" />
@@ -91,7 +91,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Service Cost Card */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             <span>Service Cost</span>
             <CircleDollarSign className="text-amber-600 h-5 w-5" />
@@ -108,7 +108,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Fleet Downtime Card */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-950 p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             <span>Fleet Downtime</span>
             <Clock3 className="text-red-500 h-5 w-5" />
@@ -119,7 +119,7 @@ export default function ReportsPage() {
                 <span className="text-3xl font-bold text-slate-950">{summary.totalDowntime}</span>
                 <span className="text-xs font-bold text-slate-500">HRS</span>
               </div>
-              <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden max-w-[80px]">
+              <div className="flex-1 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden max-w-[80px]">
                 <div className="bg-red-500 h-full rounded-full" style={{ width: `${Math.min(summary.totalDowntime / 2, 100)}%` }}></div>
               </div>
             </div>
@@ -133,10 +133,10 @@ export default function ReportsPage() {
         
         {/* Trend Bar Analytics Mockup Frame (Takes 2 Columns) */}
         <div className="xl:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between min-h-[300px]">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Mileage Trends (Last 6 Months)</h3>
             <div className="flex items-center space-x-4 text-[10px] font-bold">
-              <span className="flex items-center text-slate-500"><span className="w-2.5 h-2.5 bg-[#0f4c81] rounded-full mr-1.5 inline-block"></span>Distance (k)</span>
+              <span className="flex items-center text-slate-500"><span className="w-2.5 h-2.5 bg-blue-900 rounded-full mr-1.5 inline-block"></span>Distance (k)</span>
               <span className="flex items-center text-slate-500"><span className="w-2.5 h-2.5 bg-orange-200 rounded-full mr-1.5 inline-block"></span>Efficiency</span>
             </div>
           </div>
@@ -145,7 +145,7 @@ export default function ReportsPage() {
           <div className="flex-1 flex items-end justify-between px-4 pt-10 pb-2">
             {summary.chartData.map((height, i) => (
               <div key={i} className="flex flex-col items-center flex-1 group max-w-[45px]">
-                <div className="w-full bg-[#0f4c81] rounded-t-sm transition duration-300 group-hover:bg-blue-900" style={{ height: `${height * 1.8}px` }}></div>
+                <div className="w-full bg-blue-900 rounded-t-sm transition duration-300 group-hover:bg-blue-900" style={{ height: `${height * 1.8}px` }}></div>
                 <span className="text-[10px] font-bold text-slate-400 mt-3 block tracking-wide">{months[i]}</span>
               </div>
             ))}
@@ -156,7 +156,7 @@ export default function ReportsPage() {
         <div className="space-y-5 flex flex-col justify-between">
           
           {/* Idle Time Reduction Badge */}
-          <div className="bg-[#0b5394] text-white rounded-xl p-5 shadow-sm relative overflow-hidden flex-1 flex flex-col justify-between">
+          <div className="bg-blue-950 text-white rounded-xl p-5 shadow-sm relative overflow-hidden flex-1 flex flex-col justify-between">
             <div>
               <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-200">Idle Time Reduction</h4>
               <span className="text-3xl font-extrabold block mt-2 tracking-tight">-18.4%</span>
@@ -166,7 +166,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Fleet Utilization Badge */}
-          <div className="bg-[#f0f4f8] border border-slate-200/60 rounded-xl p-5 shadow-sm flex-1 flex flex-col justify-between">
+          <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200/60 rounded-xl p-5 shadow-sm flex-1 flex flex-col justify-between">
             <div>
               <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fleet Utilization</h4>
               <span className="text-3xl font-extrabold text-slate-900 block mt-2 tracking-tight">92.5%</span>
@@ -180,8 +180,8 @@ export default function ReportsPage() {
       </div>
 
       {/* Main Vehicle Breakdown Matrix Table Section Layout */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Monthly Vehicle Breakdown</h3>
           <div className="relative flex items-center w-full sm:w-64">
             <input type="text" placeholder="Search vehicle ID..." className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs outline-none focus:border-slate-300 font-semibold" />
@@ -204,7 +204,7 @@ export default function ReportsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
               {filteredData.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/40 transition">
+                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
                   <td className="py-4 px-5 flex items-center space-x-3">
                     <div className="bg-blue-50 text-blue-600 p-2 rounded-lg border border-blue-100 shadow-sm">
                       <Truck className="h-3.5 w-3.5" />
