@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite' // <-- 1. Import Tailwind
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/fleetops-pro/',
   plugins: [
     react(),
     tailwindcss(), // <-- 2. Add Tailwind to your plugins array
