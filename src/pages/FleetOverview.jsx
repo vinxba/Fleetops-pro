@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle2, Wrench, AlertTriangle, Clock, Plus, FileSpreadsheet, FileText } from 'lucide-react';
 
-export default function FleetOverview({ navigateToService }) {
+export default function FleetOverview({ navigateToService, navigateToReports }) {
   return (
     <div className="p-6 lg:p-8 space-y-6">
       
@@ -16,7 +16,7 @@ export default function FleetOverview({ navigateToService }) {
           <button onClick={navigateToService} className="bg-blue-900 hover:bg-blue-950 text-white text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-lg shadow-sm flex items-center transition">
             <Plus className="mr-1.5 h-4 w-4" /> Log Service
           </button>
-          <button className="bg-white dark:bg-slate-800 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-100 text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-lg border border-slate-300 shadow-sm flex items-center transition">
+          <button onClick={navigateToReports} className="bg-white dark:bg-slate-800 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-100 text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-lg border border-slate-300 shadow-sm flex items-center transition">
             <FileSpreadsheet className="mr-1.5 h-4 w-4 text-slate-400 dark:text-slate-300" /> Generate Report
           </button>
         </div>

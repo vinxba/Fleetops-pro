@@ -14,6 +14,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('Dashboard');
   const [targetVehicleId, setTargetVehicleId] = useState(null);
   const [theme, setTheme] = useState('light');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem('theme');
@@ -37,16 +38,32 @@ export default function App() {
 
   return (
     <div className={`min-h-screen flex flex-col overflow-hidden antialiased ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 dark:bg-slate-950 text-slate-800'}`}>
-      <Navbar currentPage={currentPage} setCurrentPage={setCurrentPage} theme={theme} setTheme={setTheme} />
+      <Navbar
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        theme={theme}
+        setTheme={setTheme}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} setIsLoggedIn={setIsLoggedIn} />
+        <Sidebar
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          setIsLoggedIn={setIsLoggedIn}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
 
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto">
             {currentPage === 'Dashboard' && (
-              <FleetOverview navigateToService={() => setCurrentPage('Service Entry')} />
+              <FleetOverview
+                navigateToService={() => setCurrentPage('Service Entry')}
+                navigateToReports={() => setCurrentPage('Reports')}
+              />
             )}
             {currentPage === 'Parts' && (
               <PartsPage 
