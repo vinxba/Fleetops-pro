@@ -16,6 +16,8 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState(null);
   const [fleetAssets, setFleetAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,6 +29,52 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
     'Land Cruiser 79': landCruiserImage,
     'Logistics Hauler': logisticsHaulerImage,
     'Excavator 300': excavatorImage,
+  };
+
+  const openEditFor = (vehicle) => {
+    setEditForm({
+      id: vehicle.id,
+      vehicle_name: vehicle.type,
+      plate_number: vehicle.plate_number || '',
+      assigned_driver: vehicle.assigned_driver || '',
+      monthly_start_mileage: vehicle.monthly_start_mileage || '',
+      monthly_end_mileage: vehicle.monthly_end_mileage || '',
+      fuel_level: vehicle.fuel_level || '',
+      oil_level: vehicle.oil_level || '',
+      battery_health: vehicle.battery_health || '',
+      next_service_date: vehicle.next_service_date || '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const saveEdit = (e) => {
+    e.preventDefault();
+    if (!editForm) return;
+
+    const updated = {
+      ...selectedVehicle,
+      type: editForm.vehicle_name,
+      vehicle_name: editForm.vehicle_name,
+      plate_number: editForm.plate_number,
+      assigned_driver: editForm.assigned_driver,
+      monthly_start_mileage: editForm.monthly_start_mileage,
+      monthly_end_mileage: editForm.monthly_end_mileage,
+      monthly_mileage: editForm.monthly_mileage || (Number(editForm.monthly_end_mileage || 0) - Number(editForm.monthly_start_mileage || 0)),
+      fuel_level: editForm.fuel_level,
+      oil_level: editForm.oil_level,
+      battery_health: editForm.battery_health,
+      next_service_date: editForm.next_service_date,
+      metrics: [
+        { label: 'CURRENT MILEAGE', value: `${Number(editForm.monthly_end_mileage || 0).toLocaleString()} KM` },
+        { label: 'MONTHLY MILEAGE', value: `${(Number(editForm.monthly_mileage) || (Number(editForm.monthly_end_mileage || 0) - Number(editForm.monthly_start_mileage || 0))).toLocaleString()} KM` },
+        { label: 'FUEL LEVEL', value: `${Number(editForm.fuel_level || 0).toFixed(0)}%`, progress: Math.min(100, Math.max(0, Number(editForm.fuel_level || 0))), progressColor: 'bg-emerald-600' },
+        { label: 'OIL LEVEL', value: `${Number(editForm.oil_level || 0).toFixed(0)}%`, progress: Math.min(100, Math.max(0, Number(editForm.oil_level || 0))), progressColor: 'bg-slate-600' },
+      ],
+    };
+
+    setFleetAssets((prev) => prev.map(a => a.id === updated.id ? { ...a, ...updated } : a));
+    setSelectedVehicle(updated);
+    setIsEditModalOpen(false);
   };
 
   const getVehicleImage = (vehicleType) => {
@@ -181,8 +229,8 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
               <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[11px]">{selectedVehicle.id} • {selectedVehicle.subtext}</p>
             </div>
           </div>
-          <div className="flex space-x-3">
-            <button className="bg-white dark:bg-slate-800 border border-slate-200 text-slate-900 text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm">
+            <div className="flex space-x-3">
+            <button onClick={() => openEditFor(selectedVehicle)} className="bg-white dark:bg-slate-800 border border-slate-200 text-slate-900 text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm">
               Edit Details
             </button>
             <button className="bg-slate-950 text-white text-xs font-black uppercase tracking-widest px-8 py-3.5 rounded-2xl shadow-xl shadow-blue-900/10 hover:-translate-y-1 transition active:scale-95">
@@ -235,6 +283,79 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
                     <X size={20} />
                   </button>
                   <img src={selectedVehicle.image} alt={selectedVehicle.type} className="w-full h-[80vh] object-contain bg-black" />
+                </div>
+              </div>
+            )}
+
+            {isEditModalOpen && editForm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setIsEditModalOpen(false)}>
+                <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                  <div className="p-8 lg:p-10">
+                    <div className="flex justify-between items-center mb-8">
+                      <div>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Edit Vehicle Details</h2>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Editing {editForm.vehicle_name}</p>
+                      </div>
+                      <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-xl transition text-slate-400 cursor-pointer">
+                        <X size={20} />
+                      </button>
+                    </div>
+
+                    <form className="space-y-5" onSubmit={saveEdit}>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Name</label>
+                          <input value={editForm.vehicle_name} onChange={(e) => setEditForm(f => ({ ...f, vehicle_name: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Plate Number</label>
+                          <input value={editForm.plate_number} onChange={(e) => setEditForm(f => ({ ...f, plate_number: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Assigned Driver</label>
+                          <input value={editForm.assigned_driver} onChange={(e) => setEditForm(f => ({ ...f, assigned_driver: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Next Service Date</label>
+                          <input value={editForm.next_service_date} onChange={(e) => setEditForm(f => ({ ...f, next_service_date: e.target.value }))} type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Start Mileage</label>
+                          <input value={editForm.monthly_start_mileage} onChange={(e) => setEditForm(f => ({ ...f, monthly_start_mileage: e.target.value }))} type="number" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">End Mileage</label>
+                          <input value={editForm.monthly_end_mileage} onChange={(e) => setEditForm(f => ({ ...f, monthly_end_mileage: e.target.value }))} type="number" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Fuel (%)</label>
+                          <input value={editForm.fuel_level} onChange={(e) => setEditForm(f => ({ ...f, fuel_level: e.target.value }))} type="number" min="0" max="100" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Oil (%)</label>
+                          <input value={editForm.oil_level} onChange={(e) => setEditForm(f => ({ ...f, oil_level: e.target.value }))} type="number" min="0" max="100" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Battery (%)</label>
+                          <input value={editForm.battery_health} onChange={(e) => setEditForm(f => ({ ...f, battery_health: e.target.value }))} type="number" min="0" max="100" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                      </div>
+
+                      <div className="pt-4 flex space-x-3">
+                        <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 bg-white border border-slate-200 text-slate-600 text-xs font-black uppercase tracking-widest py-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition">Cancel</button>
+                        <button type="submit" className="flex-1 bg-slate-950 text-white text-xs font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl">Save Changes</button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             )}
