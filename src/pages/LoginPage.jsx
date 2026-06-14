@@ -26,7 +26,7 @@ export default function LoginPage({ onLogin }) {
             <Truck size={40} strokeWidth={2.5} />
           </div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">
-            FleetOps <span className="text-blue-600 uppercase">Pro</span>
+            Nventro <span className="text-blue-600 uppercase">Pro</span>
           </h1>
           <p className="text-slate-400 mt-2.5 text-[10px] font-black uppercase tracking-[0.4em] opacity-80">Logistics & Asset Intelligence</p>
         </div>
