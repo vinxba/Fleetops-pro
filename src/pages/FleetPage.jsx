@@ -154,7 +154,7 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
           return;
         }
 
-        const response = await fetch('https://ozone-backend-l13p.onrender.com/api/vehicles/');
+        const response = await fetch('https://nventro-backend-c532.onrender.com/api/vehicles/');
         if (!response.ok) {
           throw new Error(`Server returned ${response.status}`);
         }
@@ -197,7 +197,7 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
       <div className="p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 w-full min-h-screen">
         <div className="max-w-4xl mx-auto rounded-[3rem] border border-slate-200 bg-white dark:bg-slate-950 p-10 shadow-sm">
           <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 mb-3">Loading vehicle inventory…</h1>
-          <p className="text-slate-500 dark:text-slate-400">Fetching from ozone-backend-l13p.onrender.com/api/vehicles/</p>
+          <p className="text-slate-500 dark:text-slate-400">Fetching from nventro-backend-c532.onrender.com/api/vehicles/</p>
         </div>
       </div>
     );
