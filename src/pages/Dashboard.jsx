@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Wrench, AlertTriangle, Clock, Plus, FileSpreadsheet, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function Dashboard() {
+export default function Dashboard({ companyName }) {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function Dashboard() {
           {/* Main Workspace Header Title & CTA Actions Row */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Fleet Overview</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{companyName} Fleet Overview</h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Real-time telemetry and service management.</p>
             </div>
             

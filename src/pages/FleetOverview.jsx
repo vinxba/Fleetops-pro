@@ -1,14 +1,14 @@
 import React from 'react';
 import { CheckCircle2, Wrench, AlertTriangle, Clock, Plus, FileSpreadsheet, FileText } from 'lucide-react';
 
-export default function FleetOverview({ navigateToService, navigateToReports }) {
+export default function FleetOverview({ companyName, navigateToService, navigateToReports }) {
   return (
     <div className="p-6 lg:p-8 space-y-6">
       
       {/* Content Header Actions Controls Row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Fleet Overview</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{companyName} Fleet Overview</h1>
           <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5">Real-time telemetry and service management.</p>
         </div>
         

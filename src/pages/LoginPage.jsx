@@ -1,20 +1,50 @@
 import React, { useState } from 'react';
-import { Truck, Lock, Mail, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { Truck, Lock, Mail, Eye, EyeOff, ShieldAlert, Building2, ChevronDown } from 'lucide-react';
 
 export default function LoginPage({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [company, setCompany] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulated authorization delay for UX feedback
-    setTimeout(() => {
-      onLogin();
+    setError(null);
+
+    try {
+      const payload = { username, password };
+      if (company) payload.company = company;
+
+      const response = await fetch('http://127.0.0.1:8000/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || `Login failed with status ${response.status}`);
+      }
+
+      if (data.token) {
+        window.localStorage.setItem('authToken', data.token);
+      }
+      if (data.user) {
+        window.localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      onLogin(data.company || company);
+    } catch (err) {
+      setError(err.message || 'Unable to login. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -38,15 +68,37 @@ export default function LoginPage({ onLogin }) {
           
          
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Company Selection */}
+            <div className="space-y-2.5">
+              <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Company Entity</label>
+              <div className="relative group/field">
+                <select
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-2xl pl-12 pr-10 py-4 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 focus:bg-white transition-all duration-300 appearance-none cursor-pointer"
+                  required
+                >
+                  <option value="" disabled>Select your organization</option>
+                  <option value="Jereh">Jereh</option>
+                  <option value="Nventro">Nventro Global</option>
+                  <option value="FleetOps">FleetOps Pro Services</option>
+                </select>
+                <Building2 className="absolute left-4.5 top-4.5 h-4 w-4 text-slate-400 group-focus-within/field:text-blue-600 transition-colors duration-300" />
+                <div className="absolute right-4 top-4.5 pointer-events-none text-slate-400">
+                   <ChevronDown size={18} />
+                </div>
+              </div>
+            </div>
+
             {/* Operator Identifier Input */}
             <div className="space-y-2.5">
-              <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Email ID</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 ml-1">Username</label>
               <div className="relative group/field">
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ops.center@fleetops.pro"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="ops.center"
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 focus:bg-white transition-all duration-300 placeholder:text-slate-300 placeholder:font-medium tracking-tight"
                   required
                 />
@@ -92,6 +144,12 @@ export default function LoginPage({ onLogin }) {
                 <span className="uppercase tracking-[0.2em] text-xs">Verify & Initialize</span>
               )}
             </button>
+
+            {error && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm font-semibold mt-3">
+                {error}
+              </div>
+            )}
           </form>
 
           {/* Trust Indicators */}

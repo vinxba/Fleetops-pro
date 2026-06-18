@@ -15,6 +15,7 @@ export default function App() {
   const [targetVehicleId, setTargetVehicleId] = useState(null);
   const [theme, setTheme] = useState('light');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState('FleetOps');
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem('theme');
@@ -33,12 +34,16 @@ export default function App() {
   }, [theme]);
 
   if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+    return <LoginPage onLogin={(company) => {
+      setIsLoggedIn(true);
+      if (company) setSelectedCompany(company);
+    }} />;
   }
 
   return (
     <div className={`min-h-screen flex flex-col overflow-hidden antialiased ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 dark:bg-slate-950 text-slate-800'}`}>
       <Navbar
+        companyName={selectedCompany}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         theme={theme}
@@ -61,6 +66,7 @@ export default function App() {
           <div className="flex-1 overflow-y-auto">
             {currentPage === 'Dashboard' && (
               <FleetOverview
+                companyName={selectedCompany}
                 navigateToService={() => setCurrentPage('Service Entry')}
                 navigateToReports={() => setCurrentPage('Reports')}
               />
@@ -91,7 +97,7 @@ export default function App() {
                 <Truck className="h-3.5 w-3.5" />
               </div>
               <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                FleetOps <span className="text-blue-600">Pro</span>
+              {selectedCompany} <span className="text-blue-600">Pro</span>
               </span>
               <span className="hidden md:inline text-[9px] font-bold text-slate-300 dark:text-slate-400 uppercase tracking-[0.25em]">
                 &copy; {new Date().getFullYear()} &middot; All Rights Reserved
