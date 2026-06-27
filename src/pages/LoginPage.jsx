@@ -15,33 +15,45 @@ export default function LoginPage({ onLogin }) {
     setError(null);
 
     try {
-      const payload = { username, password };
-      if (company) payload.company = company;
+      const payload = { username, password, company };
 
-      const response = await fetch('https://nventro-backend-1.onrender.com/api/login/', {
+      // Target Google Web App Node Deployment
+      const webAppUrl = 'https://script.google.com/macros/s/AKfycbztnOam-5OESLhQLK_2U-vFVz5Ii547iPbLSuvjc72xoelMSbdS-pM6CdEmZZzescwO/exec';
+
+      const response = await fetch(webAppUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          // 'text/plain' forces standard browsers to bypass complex CORS preflight pre-checks
+          'Content-Type': 'text/plain;charset=utf-8',
         },
         body: JSON.stringify(payload),
       });
 
+      if (!response.ok) {
+        throw new Error(`Network failure detected. Node Status: ${response.status}`);
+      }
+
       const data = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
-        throw new Error(data.message || `Login failed with status ${response.status}`);
+      // Intercept embedded validation failure exceptions from Apps Script
+      if (data && data.status && data.status !== 200) {
+        throw new Error(data.message || 'System Access Denied.');
       }
 
-      if (data.token) {
+      // Commit local auth variables on validation success
+      if (data && data.token) {
         window.localStorage.setItem('authToken', data.token);
-      }
-      if (data.user) {
-        window.localStorage.setItem('user', JSON.stringify(data.user));
+        if (data.user) {
+          window.localStorage.setItem('user', JSON.stringify(data.user));
+        }
+        onLogin(data.company || company);
+      } else {
+        throw new Error('Malformed server response payload. Access rejected.');
       }
 
-      onLogin(data.company || company);
     } catch (err) {
-      setError(err.message || 'Unable to login. Please try again.');
+      console.error("Authorization Node Error:", err);
+      setError(err.message || 'Unable to establish secure validation connection.');
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +78,6 @@ export default function LoginPage({ onLogin }) {
           {/* Interactive header accent */}
           <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-blue-600 via-cyan-400 to-blue-600 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-1000 ease-in-out"></div>
           
-         
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Company Selection */}
             <div className="space-y-2.5">
@@ -163,7 +174,7 @@ export default function LoginPage({ onLogin }) {
         <div className="mt-12 text-center">
           <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em] leading-loose opacity-60">
             Proprietary Dashboard Interface <br />
-            © 2024 FleetOps Pro Global <span className="mx-2 text-slate-200">|</span> Node: AMER-EAST-01 <br />
+            © 2026 FleetOps Pro Global <span className="mx-2 text-slate-200">|</span> Node: AMER-EAST-01 <br />
             Powered by <span className="text-blue-600 font-black">Careergize</span>
           </p>
         </div>
