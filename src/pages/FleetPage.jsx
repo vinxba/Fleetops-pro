@@ -18,9 +18,30 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
   const [imagePreview, setImagePreview] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState(null);
+  const [addForm, setAddForm] = useState({
+    vehicle_code: '',
+    vehicle_name: '',
+    vehicle_type: '',
+    plate_number: '',
+    vehicle_using_by: '',
+    service_km: '',
+    current_km: '',
+    model_year: '',
+    ards_status: 'READY',
+    insurance_upto: '',
+    registration_upto: '',
+    company: '',
+    vehicle_image_url: '',
+    remarks: '',
+    next_service_date: '',
+  });
   const [fleetAssets, setFleetAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  const API_BASE_URL = 'https://nventro-backend-c532.onrender.com/api/vehicles/';
 
   const typeImageMap = {
     'sulphur truck': tankerImage,
@@ -34,12 +55,22 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
 
   const openEditFor = (vehicle) => {
     setEditForm({
-      id: vehicle.id,
-      vehicle_name: vehicle.type,
+      id: vehicle.id ?? vehicle.vehicle_code ?? vehicle.id,
+      vehicle_name: vehicle.vehicle_name || vehicle.vehicle || vehicle.type || '',
+      vehicle_type: vehicle.vehicle_type || vehicle.type || '',
       plate_number: vehicle.plate_number || '',
-      assigned_driver: vehicle.assigned_driver || '',
-      monthly_start_mileage: vehicle.monthly_start_mileage || '',
-      monthly_end_mileage: vehicle.monthly_end_mileage || '',
+      vehicle_using_by: vehicle.vehicle_using_by || vehicle.assigned_driver || '',
+      service_km: vehicle.service_km ?? vehicle.monthly_start_mileage ?? '',
+      current_km: vehicle.current_km ?? vehicle.monthly_end_mileage ?? '',
+      balance_service_km: vehicle.balance_service_km ?? vehicle.service_km_left ?? '',
+      model_year: vehicle.model_year || vehicle.model || '',
+      ards_status: vehicle.ards_status || vehicle.status || '',
+      insurance_upto: vehicle.insurance_upto || '',
+      registration_upto: vehicle.registration_upto || '',
+      company: vehicle.company || '',
+      vehicle_image_url: vehicle.vehicle_image_url || vehicle.vehicle_image || '',
+      remarks: vehicle.remarks || vehicle.remark || '',
+      monthly_mileage: vehicle.monthly_mileage || '',
       fuel_level: vehicle.fuel_level || '',
       oil_level: vehicle.oil_level || '',
       battery_health: vehicle.battery_health || '',
@@ -56,20 +87,43 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
       ...selectedVehicle,
       type: editForm.vehicle_name,
       vehicle_name: editForm.vehicle_name,
+      vehicle_type: editForm.vehicle_type,
       plate_number: editForm.plate_number,
-      assigned_driver: editForm.assigned_driver,
-      monthly_start_mileage: editForm.monthly_start_mileage,
-      monthly_end_mileage: editForm.monthly_end_mileage,
-      monthly_mileage: editForm.monthly_mileage || (Number(editForm.monthly_end_mileage || 0) - Number(editForm.monthly_start_mileage || 0)),
+      vehicle_using_by: editForm.vehicle_using_by,
+      assigned_driver: editForm.vehicle_using_by,
+      current_km: editForm.current_km,
+      service_km: editForm.service_km,
+      balance_service_km: editForm.balance_service_km,
+      model_year: editForm.model_year,
+      ards_status: editForm.ards_status,
+      status: editForm.ards_status?.toUpperCase() || selectedVehicle.status,
+      insurance_upto: editForm.insurance_upto,
+      registration_upto: editForm.registration_upto,
+      company: editForm.company,
+      vehicle_image_url: editForm.vehicle_image_url,
+      vehicle_image: editForm.vehicle_image_url,
+      remarks: editForm.remarks,
+      monthly_mileage: editForm.monthly_mileage || '',
       fuel_level: editForm.fuel_level,
       oil_level: editForm.oil_level,
       battery_health: editForm.battery_health,
       next_service_date: editForm.next_service_date,
       metrics: [
-        { label: 'CURRENT MILEAGE', value: `${Number(editForm.monthly_end_mileage || 0).toLocaleString()} KM` },
-        { label: 'MONTHLY MILEAGE', value: `${(Number(editForm.monthly_mileage) || (Number(editForm.monthly_end_mileage || 0) - Number(editForm.monthly_start_mileage || 0))).toLocaleString()} KM` },
-        { label: 'FUEL LEVEL', value: `${Number(editForm.fuel_level || 0).toFixed(0)}%`, progress: Math.min(100, Math.max(0, Number(editForm.fuel_level || 0))), progressColor: 'bg-emerald-600' },
-        { label: 'OIL LEVEL', value: `${Number(editForm.oil_level || 0).toFixed(0)}%`, progress: Math.min(100, Math.max(0, Number(editForm.oil_level || 0))), progressColor: 'bg-slate-600' },
+        { label: 'CURRENT KM', value: `${Number(editForm.current_km || 0).toLocaleString()} KM` },
+        { label: 'SERVICE LEFT', value: `${Number(editForm.balance_service_km || 0).toLocaleString()} KM` },
+        { label: 'SERVICE KM', value: `${Number(editForm.service_km || 0).toLocaleString()} KM` },
+        { label: 'MODEL YEAR', value: editForm.model_year || 'N/A' },
+      ],
+      technicalSpecs: [
+        { label: 'Vehicle Type', value: editForm.vehicle_type || 'N/A' },
+        { label: 'Plate Number', value: editForm.plate_number || 'N/A' },
+        { label: 'Vehicle Using By', value: editForm.vehicle_using_by || 'Unassigned' },
+        { label: 'Model', value: editForm.model_year || 'N/A' },
+        { label: 'ARDS Status', value: editForm.ards_status || 'N/A' },
+        { label: 'Insurance Up-To', value: editForm.insurance_upto || 'N/A' },
+        { label: 'Registration Up-To', value: editForm.registration_upto || 'N/A' },
+        { label: 'Company', value: editForm.company || 'N/A' },
+        { label: 'Remarks', value: editForm.remarks || 'No remarks' },
       ],
     };
 
@@ -84,6 +138,101 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
     return typeImageMap[normalized] || MitsubishiL200;
   };
 
+  const resetAddForm = () => {
+    setAddForm({
+      vehicle_code: '',
+      vehicle_name: '',
+      vehicle_type: '',
+      plate_number: '',
+      vehicle_using_by: '',
+      service_km: '',
+      current_km: '',
+      model_year: '',
+      ards_status: 'READY',
+      insurance_upto: '',
+      registration_upto: '',
+      company: '',
+      vehicle_image_url: '',
+      remarks: '',
+      next_service_date: '',
+    });
+  };
+
+  const openAddModal = () => {
+    resetAddForm();
+    setImagePreview(null);
+    setSaveError(null);
+    setIsAddModalOpen(true);
+  };
+
+  const saveNewVehicle = async (e) => {
+    e.preventDefault();
+    setSaveError(null);
+    setIsSaving(true);
+
+    const balanceServiceKm = Math.max(0, Number(addForm.service_km) - Number(addForm.current_km));
+    const payload = {
+      vehicle_name: addForm.vehicle_name,
+      vehicle_type: addForm.vehicle_type,
+      plate_number: addForm.plate_number,
+      vehicle_using_by: addForm.vehicle_using_by,
+      service_km: Number(addForm.service_km) || 0,
+      current_km: Number(addForm.current_km) || 0,
+      balance_service_km: balanceServiceKm,
+      model_year: addForm.model_year,
+      ards_status: addForm.ards_status,
+      insurance_upto: addForm.insurance_upto || null,
+      registration_upto: addForm.registration_upto || null,
+      remarks: addForm.remarks,
+      next_service_date: addForm.next_service_date || null,
+    };
+
+    try {
+      console.log('Saving vehicle payload', payload);
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const errorText = await response.text().catch(() => null);
+        throw new Error(
+          errorData?.detail || errorData?.message || errorText || `Create failed with status ${response.status}`
+        );
+      }
+
+      let createdVehicle;
+      try {
+        createdVehicle = await response.json();
+      } catch (jsonError) {
+        console.warn('POST succeeded but response body is not JSON', jsonError);
+        createdVehicle = { ...payload, id: `NEW-${Date.now()}` };
+      }
+      console.log('Created vehicle', createdVehicle);
+
+      const refreshResponse = await fetch(API_BASE_URL);
+      if (refreshResponse.ok) {
+        const listData = await refreshResponse.json().catch(() => null);
+        setFleetAssets(Array.isArray(listData) ? listData.map(mapVehicleResponse) : [mapVehicleResponse(createdVehicle)]);
+      } else {
+        setFleetAssets((prev) => [mapVehicleResponse(createdVehicle), ...prev]);
+      }
+
+      setIsAddModalOpen(false);
+      setImagePreview(null);
+      resetAddForm();
+    } catch (createError) {
+      console.error('Unable to create vehicle:', createError);
+      setSaveError(createError.message || 'Unable to create vehicle.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const formatKmValue = (value) => {
     const numericValue = Number(value);
     if (!Number.isFinite(numericValue)) return 'N/A';
@@ -93,12 +242,15 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
   const mapVehicleResponse = (vehicle) => {
     const currentKm = Number(vehicle.current_km ?? vehicle.monthly_end_mileage ?? 0);
     const serviceKm = Number(vehicle.service_km ?? vehicle.monthly_start_mileage ?? 0);
-    const balanceServiceKm = Number(vehicle.balance_service_km ?? vehicle.service_km_left ?? 0);
+    const balanceServiceKm = Number(vehicle.balance_service_km ?? vehicle.service_km_left ?? vehicle.balance_service_km ?? 0);
     const status = (vehicle.ards_status || vehicle.status || 'UNKNOWN').toUpperCase();
-    const vehicleName = vehicle.vehicle_name || `Vehicle ${vehicle.id}`;
-    const vehicleType = vehicle.vehicle_type || 'Unknown Type';
+    const vehicleName = vehicle.vehicle_name || vehicle.vehicle || vehicle.type || `Vehicle ${vehicle.id}`;
+    const vehicleType = vehicle.vehicle_type || vehicle.type || 'Unknown Type';
     const imageUrl = vehicle.vehicle_image_url || vehicle.vehicle_image || getVehicleImage(vehicleType);
     const driverName = vehicle.vehicle_using_by || vehicle.assigned_driver || 'Unassigned';
+    const insuranceUntil = vehicle.insurance_upto || vehicle.insurance_until || 'N/A';
+    const companyName = vehicle.company || 'N/A';
+    const remarks = vehicle.remarks || vehicle.remark || 'No remarks';
 
     return {
       id: vehicle.vehicle_code || String(vehicle.id),
@@ -110,22 +262,30 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
         { label: 'CURRENT KM', value: formatKmValue(currentKm) },
         { label: 'SERVICE LEFT', value: formatKmValue(balanceServiceKm) },
         { label: 'SERVICE KM', value: formatKmValue(serviceKm) },
-        { label: 'MODEL YEAR', value: vehicle.model_year || 'N/A' },
+        { label: 'MODEL', value: vehicle.model_year || vehicle.model || 'N/A' },
       ],
       repairHistory: [],
       partsRemoved: [],
       technicalSpecs: [
-        { label: 'Type', value: vehicleType },
+        { label: 'Vehicle Type', value: vehicleType },
         { label: 'Plate Number', value: vehicle.plate_number || 'N/A' },
-        { label: 'Driver', value: driverName },
-        { label: 'Model Year', value: vehicle.model_year || 'N/A' },
-        { label: 'Registration Upto', value: vehicle.registration_upto || 'N/A' },
+        { label: 'Vehicle Using By', value: driverName },
+        { label: 'Model', value: vehicle.model_year || vehicle.model || 'N/A' },
+        { label: 'ARDS Status', value: status || 'N/A' },
+        { label: 'Insurance Up-To', value: insuranceUntil },
+        { label: 'Registration Up-To', value: vehicle.registration_upto || 'N/A' },
+        { label: 'Company', value: companyName },
+        { label: 'Remarks', value: remarks },
       ],
       footerLeft: { label: 'SERVICE BALANCE', value: formatKmValue(balanceServiceKm) },
       footerRight: status === 'READY' ? 'actions' : status === 'IN REPAIR' ? 'history' : 'book_now',
       iconBg: status === 'READY' ? 'bg-blue-50 text-blue-600' : status === 'IN REPAIR' ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-500',
       plate_number: vehicle.plate_number,
+      vehicle_using_by: driverName,
       assigned_driver: driverName,
+      service_km: serviceKm,
+      current_km: currentKm,
+      balance_service_km: balanceServiceKm,
       monthly_start_mileage: vehicle.monthly_start_mileage,
       monthly_end_mileage: vehicle.monthly_end_mileage,
       monthly_mileage: vehicle.monthly_mileage,
@@ -133,17 +293,19 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
       oil_level: vehicle.oil_level,
       battery_health: vehicle.battery_health,
       next_service_date: vehicle.next_service_date,
-      current_km: currentKm,
-      balance_service_km: balanceServiceKm,
       vehicle_name: vehicleName,
       vehicle_type: vehicleType,
+      insurance_upto: insuranceUntil,
+      company: companyName,
+      remarks,
     };
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImagePreview(URL.createObjectURL(file));
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
     }
   };
 
@@ -165,7 +327,7 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
           return;
         }
 
-        const response = await fetch('https://nventro-backend-c532.onrender.com/api/vehicles/');
+        const response = await fetch(API_BASE_URL);
         if (!response.ok) {
           throw new Error(`Server returned ${response.status}`);
         }
@@ -315,35 +477,77 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
                     <form className="space-y-5" onSubmit={saveEdit}>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Name</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle</label>
                           <input value={editForm.vehicle_name} onChange={(e) => setEditForm(f => ({ ...f, vehicle_name: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
                         </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Type</label>
+                          <input value={editForm.vehicle_type} onChange={(e) => setEditForm(f => ({ ...f, vehicle_type: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Plate Number</label>
                           <input value={editForm.plate_number} onChange={(e) => setEditForm(f => ({ ...f, plate_number: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Assigned Driver</label>
-                          <input value={editForm.assigned_driver} onChange={(e) => setEditForm(f => ({ ...f, assigned_driver: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Next Service Date</label>
-                          <input value={editForm.next_service_date} onChange={(e) => setEditForm(f => ({ ...f, next_service_date: e.target.value }))} type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Using By</label>
+                          <input value={editForm.vehicle_using_by} onChange={(e) => setEditForm(f => ({ ...f, vehicle_using_by: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Start Mileage</label>
-                          <input value={editForm.monthly_start_mileage} onChange={(e) => setEditForm(f => ({ ...f, monthly_start_mileage: e.target.value }))} type="number" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Company</label>
+                          <input value={editForm.company} onChange={(e) => setEditForm(f => ({ ...f, company: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">End Mileage</label>
-                          <input value={editForm.monthly_end_mileage} onChange={(e) => setEditForm(f => ({ ...f, monthly_end_mileage: e.target.value }))} type="number" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">ARDS Status</label>
+                          <input value={editForm.ards_status} onChange={(e) => setEditForm(f => ({ ...f, ards_status: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Model</label>
+                          <input value={editForm.model_year} onChange={(e) => setEditForm(f => ({ ...f, model_year: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Image URL</label>
+                          <input value={editForm.vehicle_image_url} onChange={(e) => setEditForm(f => ({ ...f, vehicle_image_url: e.target.value }))} type="text" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Insurance Up-To</label>
+                          <input value={editForm.insurance_upto} onChange={(e) => setEditForm(f => ({ ...f, insurance_upto: e.target.value }))} type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition appearance-none cursor-pointer" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Registration Up-To</label>
+                          <input value={editForm.registration_upto} onChange={(e) => setEditForm(f => ({ ...f, registration_upto: e.target.value }))} type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition appearance-none cursor-pointer" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Current (K-M)</label>
+                          <input value={editForm.current_km} onChange={(e) => setEditForm(f => ({ ...f, current_km: e.target.value }))} type="number" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">(K-M) for Service</label>
+                          <input value={editForm.service_km} onChange={(e) => setEditForm(f => ({ ...f, service_km: e.target.value }))} type="number" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Balance (K-M) for Service</label>
+                          <input value={editForm.balance_service_km} onChange={(e) => setEditForm(f => ({ ...f, balance_service_km: e.target.value }))} type="number" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Remarks</label>
+                        <textarea value={editForm.remarks} onChange={(e) => setEditForm(f => ({ ...f, remarks: e.target.value }))} rows="3" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
                       </div>
 
                       <div className="grid grid-cols-3 gap-4">
@@ -470,7 +674,7 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
         
         <div className="flex items-center space-x-2.5 self-start sm:self-auto">
           <button 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={openAddModal}
             className="bg-blue-950 hover:bg-blue-900 text-white text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-lg shadow-sm flex items-center transition cursor-pointer"
           >
             <Plus className="mr-1.5 h-4 w-4" /> Add Vehicle
@@ -597,20 +801,20 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
 
       {/* Add Vehicle Registration Modal Overlay */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" onClick={() => { setIsAddModalOpen(false); setImagePreview(null); }}>
-          <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
-            <div className="p-8 lg:p-10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-3" onClick={() => { setIsAddModalOpen(false); setImagePreview(null); }}>
+          <div className="bg-white dark:bg-slate-950 rounded-3xl w-full max-w-full max-h-[90vh] overflow-hidden shadow-2xl shadow-slate-900/20 relative animate-in fade-in zoom-in duration-300 border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+            <div className="p-5 lg:p-7 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Register New Asset</h2>
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Fleet Inventory Initialization</p>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Add Vehicle</h2>
+                  <p className="text-slate-500 text-[11px] uppercase tracking-[0.25em] mt-1">Enter the vehicle details below</p>
                 </div>
                 <button onClick={() => { setIsAddModalOpen(false); setImagePreview(null); }} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-xl transition text-slate-400 cursor-pointer">
                   <X size={20} />
                 </button>
               </div>
 
-              <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); setIsAddModalOpen(false); setImagePreview(null); }}>
+              <form className="space-y-5" onSubmit={saveNewVehicle}>
                 {/* Image Upload Area */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Asset Photograph</label>
@@ -644,49 +848,92 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Asset ID (Unit / Plate)</label>
-                  <input type="text" placeholder="e.g. KWT-56888" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Image URL (optional)</label>
+                  <input value={addForm.vehicle_image_url} onChange={(e) => setAddForm(f => ({ ...f, vehicle_image_url: e.target.value }))} type="text" placeholder="https://example.com/vehicle.jpg" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                  <p className="text-[10px] text-slate-400">Upload a photo above or provide a public image URL.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Model / Type</label>
-                    <input type="text" placeholder="e.g. Mitsubishi L200" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle</label>
+                    <input value={addForm.vehicle_name} onChange={(e) => setAddForm(f => ({ ...f, vehicle_name: e.target.value }))} type="text" placeholder="e.g. Heavy Duty Tanker" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
-                    <input type="text" placeholder="e.g. Pickup" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Type</label>
+                    <input value={addForm.vehicle_type} onChange={(e) => setAddForm(f => ({ ...f, vehicle_type: e.target.value }))} type="text" placeholder="e.g. Tanker" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Kilometers Driven (Odometer)</label>
-                    <div className="relative flex items-center">
-                      <input type="number" placeholder="0" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition pr-12" required />
-                      <span className="absolute right-4 text-[9px] font-black text-slate-300">KM</span>
-                    </div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Plate Number</label>
+                    <input value={addForm.plate_number} onChange={(e) => setAddForm(f => ({ ...f, plate_number: e.target.value }))} type="text" placeholder="e.g. KWT-56888" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Initial Status</label>
-                    <select className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition appearance-none cursor-pointer">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Using By</label>
+                    <input value={addForm.vehicle_using_by} onChange={(e) => setAddForm(f => ({ ...f, vehicle_using_by: e.target.value }))} type="text" placeholder="e.g. Driver Name" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Company</label>
+                    <input value={addForm.company} onChange={(e) => setAddForm(f => ({ ...f, company: e.target.value }))} type="text" placeholder="e.g. FleetOps" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Model</label>
+                    <input value={addForm.model_year} onChange={(e) => setAddForm(f => ({ ...f, model_year: e.target.value }))} type="text" placeholder="e.g. 2024" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">ARDS Status</label>
+                    <select value={addForm.ards_status} onChange={(e) => setAddForm(f => ({ ...f, ards_status: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition appearance-none cursor-pointer">
                       <option value="READY">READY</option>
+                      <option value="REPAIR">REPAIR</option>
                       <option value="IN REPAIR">IN REPAIR</option>
                       <option value="OVERDUE">OVERDUE</option>
                     </select>
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vehicle Image URL</label>
+                    <input value={addForm.vehicle_image_url} onChange={(e) => setAddForm(f => ({ ...f, vehicle_image_url: e.target.value }))} type="text" placeholder="Image URL" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">CURRENT (K-M)</label>
+                    <input value={addForm.current_km} onChange={(e) => setAddForm(f => ({ ...f, current_km: e.target.value }))} type="number" placeholder="0" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">(K-M) FOR SERVICE</label>
+                    <input value={addForm.service_km} onChange={(e) => setAddForm(f => ({ ...f, service_km: e.target.value }))} type="number" placeholder="0" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Last Service Date</label>
-                    <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition appearance-none cursor-pointer" />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Insurance Up-To</label>
+                    <input value={addForm.insurance_upto} onChange={(e) => setAddForm(f => ({ ...f, insurance_upto: e.target.value }))} type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition appearance-none cursor-pointer" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Next Service Date</label>
-                    <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition appearance-none cursor-pointer" />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Registration Up-To</label>
+                    <input value={addForm.registration_upto} onChange={(e) => setAddForm(f => ({ ...f, registration_upto: e.target.value }))} type="date" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition appearance-none cursor-pointer" />
                   </div>
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Remarks</label>
+                  <textarea value={addForm.remarks} onChange={(e) => setAddForm(f => ({ ...f, remarks: e.target.value }))} rows="3" placeholder="Additional notes" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" />
+                </div>
+
+                {saveError && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 p-3 text-sm font-semibold">
+                    {saveError}
+                  </div>
+                )}
 
                 <div className="pt-4 flex space-x-3">
                   <button 
@@ -698,9 +945,10 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
                   </button>
                   <button 
                     type="submit" 
-                    className="flex-1 bg-slate-950 text-white text-xs font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-blue-900/10 hover:-translate-y-1 transition active:scale-95 cursor-pointer"
+                    disabled={isSaving}
+                    className={`flex-1 text-white text-xs font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl shadow-blue-900/10 transition active:scale-95 cursor-pointer ${isSaving ? 'bg-slate-500 cursor-not-allowed hover:translate-y-0' : 'bg-slate-950 hover:-translate-y-1'}`}
                   >
-                    Save Asset
+                    {isSaving ? 'Saving...' : 'Save Asset'}
                   </button>
                 </div>
               </form>
