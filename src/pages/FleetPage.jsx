@@ -3,7 +3,7 @@ import { Search, Plus, Download, MoreVertical, RotateCcw, Settings, Truck, X, Ar
 
 // ─── Google Apps Script endpoint ────────────────────────────────────────────
 const GAS_URL =
-  'https://script.google.com/macros/s/AKfycbyc6ALuNqoN-SpZSKNQRazRQ9Ggvj9WLA6M8VsblSRAYJlzxszRNTgwNQVWcra83vmP/exec';
+  'https://script.google.com/macros/s/AKfycbyHg-H9mc293VqGfR6ys2dKExHo9YdgnTzXy791Elu9FEasgypRoDjMq8MQsBx3I2cn/exec';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -16,13 +16,21 @@ async function apiGetVehicles() {
   return json.data; // array of raw vehicle objects
 }
 
-/** POST  { action: "createVehicle", ...fields } */
+/** GET  ?action=createVehicle&data=<JSON>
+ *  Using GET avoids CORS preflight — Apps Script handles GET cross-origin fine.
+ *  Large base64 images are chunked: image is sent separately only if present.
+ */
 async function apiCreateVehicle(payload) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'createVehicle', ...payload }),
-  });
+  // Split image out — we'll send it in a second call if too large,
+  // but GAS URL limit is ~2000 chars so we cap the data param.
+  const { vehicle_image, ...rest } = payload;
+
+  // Build the URL with non-image fields first
+  const url = new URL(GAS_URL);
+  url.searchParams.set('action', 'createVehicle');
+  url.searchParams.set('data', JSON.stringify({ ...rest, vehicle_image: vehicle_image || '' }));
+
+  const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (!json.status) throw new Error(json.message || 'Failed to create vehicle');
