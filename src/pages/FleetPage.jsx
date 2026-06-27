@@ -54,7 +54,9 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
   };
 
   const openEditFor = (vehicle) => {
+    setSaveError(null);
     setEditForm({
+      apiId: vehicle.apiId ?? vehicle.id,
       id: vehicle.id ?? vehicle.vehicle_code ?? vehicle.id,
       vehicle_name: vehicle.vehicle_name || vehicle.vehicle || vehicle.type || '',
       vehicle_type: vehicle.vehicle_type || vehicle.type || '',
@@ -79,57 +81,72 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
     setIsEditModalOpen(true);
   };
 
-  const saveEdit = (e) => {
+  const saveEdit = async (e) => {
     e.preventDefault();
     if (!editForm) return;
 
-    const updated = {
-      ...selectedVehicle,
-      type: editForm.vehicle_name,
+    setSaveError(null);
+    setIsSaving(true);
+
+    const idForApi = editForm.apiId ?? selectedVehicle?.apiId ?? editForm.id;
+    const balanceServiceKm = editForm.balance_service_km !== '' && editForm.balance_service_km !== null
+      ? Number(editForm.balance_service_km)
+      : Math.max(0, Number(editForm.service_km) - Number(editForm.current_km));
+
+    const payload = {
       vehicle_name: editForm.vehicle_name,
       vehicle_type: editForm.vehicle_type,
       plate_number: editForm.plate_number,
       vehicle_using_by: editForm.vehicle_using_by,
-      assigned_driver: editForm.vehicle_using_by,
-      current_km: editForm.current_km,
-      service_km: editForm.service_km,
-      balance_service_km: editForm.balance_service_km,
+      service_km: Number(editForm.service_km) || 0,
+      current_km: Number(editForm.current_km) || 0,
+      balance_service_km: balanceServiceKm,
       model_year: editForm.model_year,
       ards_status: editForm.ards_status,
-      status: editForm.ards_status?.toUpperCase() || selectedVehicle.status,
-      insurance_upto: editForm.insurance_upto,
-      registration_upto: editForm.registration_upto,
-      company: editForm.company,
-      vehicle_image_url: editForm.vehicle_image_url,
-      vehicle_image: editForm.vehicle_image_url,
+      insurance_upto: editForm.insurance_upto || null,
+      registration_upto: editForm.registration_upto || null,
+      vehicle_image_url: editForm.vehicle_image_url || null,
+      vehicle_image: editForm.vehicle_image_url || null,
       remarks: editForm.remarks,
-      monthly_mileage: editForm.monthly_mileage || '',
-      fuel_level: editForm.fuel_level,
-      oil_level: editForm.oil_level,
-      battery_health: editForm.battery_health,
-      next_service_date: editForm.next_service_date,
-      metrics: [
-        { label: 'CURRENT KM', value: `${Number(editForm.current_km || 0).toLocaleString()} KM` },
-        { label: 'SERVICE LEFT', value: `${Number(editForm.balance_service_km || 0).toLocaleString()} KM` },
-        { label: 'SERVICE KM', value: `${Number(editForm.service_km || 0).toLocaleString()} KM` },
-        { label: 'MODEL YEAR', value: editForm.model_year || 'N/A' },
-      ],
-      technicalSpecs: [
-        { label: 'Vehicle Type', value: editForm.vehicle_type || 'N/A' },
-        { label: 'Plate Number', value: editForm.plate_number || 'N/A' },
-        { label: 'Vehicle Using By', value: editForm.vehicle_using_by || 'Unassigned' },
-        { label: 'Model', value: editForm.model_year || 'N/A' },
-        { label: 'ARDS Status', value: editForm.ards_status || 'N/A' },
-        { label: 'Insurance Up-To', value: editForm.insurance_upto || 'N/A' },
-        { label: 'Registration Up-To', value: editForm.registration_upto || 'N/A' },
-        { label: 'Company', value: editForm.company || 'N/A' },
-        { label: 'Remarks', value: editForm.remarks || 'No remarks' },
-      ],
+      next_service_date: editForm.next_service_date || null,
     };
 
-    setFleetAssets((prev) => prev.map(a => a.id === updated.id ? { ...a, ...updated } : a));
-    setSelectedVehicle(updated);
-    setIsEditModalOpen(false);
+    const companyId = Number(editForm.company);
+    if (!Number.isNaN(companyId) && editForm.company !== '' && editForm.company !== null) {
+      payload.company = companyId;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}${idForApi}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const errorText = await response.text().catch(() => null);
+        throw new Error(
+          errorData?.detail || errorData?.message || errorText || `Update failed with status ${response.status}`
+        );
+      }
+
+      const updatedVehicle = await response.json();
+      const mappedVehicle = mapVehicleResponse(updatedVehicle);
+
+      setFleetAssets((prev) => prev.map((asset) =>
+        asset.apiId === mappedVehicle.apiId || asset.id === mappedVehicle.id ? { ...asset, ...mappedVehicle } : asset
+      ));
+      setSelectedVehicle(mappedVehicle);
+      setIsEditModalOpen(false);
+    } catch (updateError) {
+      console.error('Unable to update vehicle:', updateError);
+      setSaveError(updateError.message || 'Unable to update vehicle.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getVehicleImage = (vehicleType) => {
@@ -185,7 +202,16 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
       registration_upto: addForm.registration_upto || null,
       remarks: addForm.remarks,
       next_service_date: addForm.next_service_date || null,
+      vehicle_image_url: addForm.vehicle_image_url?.trim() || null,
+      vehicle_image: addForm.vehicle_image_url?.trim() || null,
     };
+
+    const companyId = Number(addForm.company);
+    if (!Number.isNaN(companyId) && addForm.company !== '' && addForm.company !== null) {
+      payload.company = companyId;
+    } else {
+      payload.company = null;
+    }
 
     try {
       console.log('Saving vehicle payload', payload);
@@ -280,6 +306,8 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
       footerLeft: { label: 'SERVICE BALANCE', value: formatKmValue(balanceServiceKm) },
       footerRight: status === 'READY' ? 'actions' : status === 'IN REPAIR' ? 'history' : 'book_now',
       iconBg: status === 'READY' ? 'bg-blue-50 text-blue-600' : status === 'IN REPAIR' ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-500',
+      apiId: vehicle.id,
+      companyId: vehicle.company,
       plate_number: vehicle.plate_number,
       vehicle_using_by: driverName,
       assigned_driver: driverName,
@@ -565,9 +593,17 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
                         </div>
                       </div>
 
+                      {saveError && (
+                        <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 p-3 text-sm font-semibold">
+                          {saveError}
+                        </div>
+                      )}
+
                       <div className="pt-4 flex space-x-3">
                         <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 bg-white border border-slate-200 text-slate-600 text-xs font-black uppercase tracking-widest py-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition">Cancel</button>
-                        <button type="submit" className="flex-1 bg-slate-950 text-white text-xs font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl">Save Changes</button>
+                        <button type="submit" disabled={isSaving} className={`flex-1 text-white text-xs font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl transition ${isSaving ? 'bg-slate-500 cursor-not-allowed hover:translate-y-0' : 'bg-slate-950 hover:-translate-y-1'}`}>
+                          {isSaving ? 'Saving...' : 'Save Changes'}
+                        </button>
                       </div>
                     </form>
                   </div>
