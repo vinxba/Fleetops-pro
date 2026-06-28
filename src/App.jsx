@@ -1,47 +1,89 @@
-import React, { useEffect, useState } from 'react';
-import { Truck, Sparkles } from 'lucide-react';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import FleetOverview from './pages/FleetOverview';
-import ServiceEntry from './pages/ServiceEntry';
-import ReportsPage from './pages/ReportsPage';
-import FleetPage from './pages/FleetPage';
-import LoginPage from './pages/LoginPage';
-import PartsPage from './pages/PartsPage';
+import React, { useEffect, useState, lazy, Suspense } from "react";
+import { Truck, Sparkles } from "lucide-react";
+
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import LoginPage from "./pages/LoginPage";
+
+const FleetOverview = lazy(() => import("./pages/FleetOverview"));
+const FleetPage = lazy(() => import("./pages/FleetPage"));
+const ServiceEntry = lazy(() => import("./pages/ServiceEntry"));
+const ReportsPage = lazy(() => import("./pages/ReportsPage"));
+const PartsPage = lazy(() => import("./pages/PartsPage"));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-full min-h-[500px]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-slate-500 dark:text-slate-300 font-medium">
+          Loading...
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentPage, setCurrentPage] = useState('Dashboard');
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
+
+  const [currentPage, setCurrentPage] = useState("Dashboard");
   const [targetVehicleId, setTargetVehicleId] = useState(null);
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState("light");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState('FleetOps');
+  const [selectedCompany, setSelectedCompany] = useState(
+    localStorage.getItem("company") || "FleetOps"
+  );
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem('theme');
-    if (savedTheme === 'dark' || savedTheme === 'light') {
-      setTheme(savedTheme);
-      return;
-    }
+    const savedTheme = localStorage.getItem("theme");
 
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(prefersDark ? 'dark' : 'light');
+    if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+
+      setTheme(prefersDark ? "dark" : "light");
+    }
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    window.localStorage.setItem('theme', theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
+  const handleLogin = (company) => {
+    setIsLoggedIn(true);
+
+    localStorage.setItem("isLoggedIn", "true");
+
+    if (company) {
+      setSelectedCompany(company);
+      localStorage.setItem("company", company);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    setIsLoggedIn(false);
+  };
+
   if (!isLoggedIn) {
-    return <LoginPage onLogin={(company) => {
-      setIsLoggedIn(true);
-      if (company) setSelectedCompany(company);
-    }} />;
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   return (
-    <div className={`min-h-screen flex flex-col overflow-hidden antialiased ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 dark:bg-slate-950 text-slate-800'}`}>
+    <div
+      className={`min-h-screen flex flex-col overflow-hidden antialiased ${
+        theme === "dark"
+          ? "bg-slate-950 text-slate-100"
+          : "bg-slate-50 text-slate-800"
+      }`}
+    >
       <Navbar
         companyName={selectedCompany}
         currentPage={currentPage}
@@ -56,78 +98,83 @@ export default function App() {
         <Sidebar
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
-          setIsLoggedIn={setIsLoggedIn}
+          setIsLoggedIn={handleLogout}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
         />
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto">
-            {currentPage === 'Dashboard' && (
-              <FleetOverview
-                companyName={selectedCompany}
-                navigateToService={() => setCurrentPage('Service Entry')}
-                navigateToReports={() => setCurrentPage('Reports')}
-              />
-            )}
-            {currentPage === 'Parts' && (
-              <PartsPage 
-                onVehicleClick={(vehicleName) => {
-                  setTargetVehicleId(vehicleName);
-                  setCurrentPage('Fleet');
-                }} 
-              />
-            )}
-            {currentPage === 'Service Entry' && <ServiceEntry />}
-            {currentPage === 'Reports' && <ReportsPage />}
-            {currentPage === 'Fleet' && (
-              <FleetPage 
-                initialVehicleId={targetVehicleId} 
-                onClearSelection={() => setTargetVehicleId(null)} 
-              />
-            )}
+            <Suspense fallback={<PageLoader />}>
+              {currentPage === "Dashboard" && (
+                <FleetOverview
+                  companyName={selectedCompany}
+                  navigateToService={() => setCurrentPage("Service Entry")}
+                  navigateToReports={() => setCurrentPage("Reports")}
+                />
+              )}
+
+              {currentPage === "Parts" && (
+                <PartsPage
+                  onVehicleClick={(vehicleName) => {
+                    setTargetVehicleId(vehicleName);
+                    setCurrentPage("Fleet");
+                  }}
+                />
+              )}
+
+              {currentPage === "Service Entry" && <ServiceEntry />}
+
+              {currentPage === "Reports" && <ReportsPage />}
+
+              {currentPage === "Fleet" && (
+                <FleetPage
+                  initialVehicleId={targetVehicleId}
+                  onClearSelection={() => setTargetVehicleId(null)}
+                />
+              )}
+            </Suspense>
           </div>
 
-          {/* Global Application Footer */}
-          <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between shrink-0 select-none">
-            {/* Brand Mark */}
-            <div className="flex items-center space-x-2.5">
-              <div className="bg-blue-600 text-white p-1 rounded-md">
-                <Truck className="h-3.5 w-3.5" />
+          <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between shrink-0">
+            <div className="flex items-center space-x-2">
+              <div className="bg-blue-600 text-white p-1 rounded">
+                <Truck className="h-4 w-4" />
               </div>
-              <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 tracking-tight">
-              {selectedCompany} <span className="text-blue-600">Pro</span>
+
+              <span className="font-bold">
+                {selectedCompany}
+                <span className="text-blue-600 ml-1">Pro</span>
               </span>
-              <span className="hidden md:inline text-[9px] font-bold text-slate-300 dark:text-slate-400 uppercase tracking-[0.25em]">
-                &copy; {new Date().getFullYear()} &middot; All Rights Reserved
+
+              <span className="hidden md:block text-xs text-slate-400">
+                © {new Date().getFullYear()} All Rights Reserved
               </span>
             </div>
 
-            {/* Quick Navigation Links */}
-            <nav className="hidden lg:flex items-center space-x-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              {['Dashboard', 'Fleet', 'Reports'].map((page) => (
+            <nav className="hidden lg:flex gap-5 text-xs uppercase">
+              {["Dashboard", "Fleet", "Reports"].map((page) => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-blue-600 transition"
                 >
                   {page}
                 </button>
               ))}
-              <span className="text-slate-200">|</span>
-              <span className="cursor-default">Privacy</span>
-              <span className="cursor-default">Terms</span>
-              <span className="cursor-default">Support</span>
             </nav>
 
-            {/* Powered By Badge */}
-            <div className="flex items-center space-x-2">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Powered by</span>
-              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 border border-blue-100/80 shadow-sm">
-                <Sparkles className="h-3 w-3" />
-                <span className="text-[10px] font-black tracking-wide">Careergize</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">
+                Powered by
               </span>
+
+              <div className="flex items-center gap-1 bg-blue-50 dark:bg-slate-800 px-3 py-1 rounded-lg">
+                <Sparkles className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-bold text-blue-600">
+                  Careergize
+                </span>
+              </div>
             </div>
           </footer>
         </div>
