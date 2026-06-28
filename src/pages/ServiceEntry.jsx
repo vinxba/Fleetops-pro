@@ -53,6 +53,11 @@ export default function ServiceEntry() {
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Workshop Name</label>
+              <input type="text" placeholder="Fleet Garage A" className="w-full bg-slate-50/50 dark:bg-slate-800/70 border border-slate-200 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none" />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Service Type</label>

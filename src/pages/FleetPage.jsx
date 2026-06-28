@@ -40,6 +40,9 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [serviceHistory, setServiceHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
 
   const API_BASE_URL = 'https://nventro-backend-c532.onrender.com/api/vehicles/';
 
@@ -393,6 +396,50 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
     }
   }, [initialVehicleId, fleetAssets]);
 
+  useEffect(() => {
+    const fetchServiceHistory = async () => {
+      if (!selectedVehicle) {
+        setServiceHistory([]);
+        setHistoryError(null);
+        return;
+      }
+
+      const vehicleId = selectedVehicle.apiId ?? selectedVehicle.id;
+      if (!vehicleId) {
+        setServiceHistory([]);
+        setHistoryError('No vehicle ID available for service history.');
+        return;
+      }
+
+      setHistoryLoading(true);
+      setHistoryError(null);
+
+      try {
+        const response = await fetch(`https://nventro-backend-c532.onrender.com/api/services/?vehicle_id=${vehicleId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to load service history (${response.status})`);
+        }
+
+        const data = await response.json();
+        const mappedHistory = Array.isArray(data) ? data.map((entry) => ({
+          date: entry.service_date,
+          serviceType: entry.service_type || 'N/A',
+          cost: entry.actual_cost ?? entry.estimated_cost ?? '0.00',
+          workshop: entry.workshop_name || 'Unknown Workshop',
+          details: entry.work_performed || 'No details provided',
+        })) : [];
+        setServiceHistory(mappedHistory);
+      } catch (err) {
+        setHistoryError(err.message || 'Unable to load maintenance history.');
+        setServiceHistory([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    fetchServiceHistory();
+  }, [selectedVehicle]);
+
   if (!selectedVehicle && loading) {
     return (
       <div className="p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 w-full min-h-screen">
@@ -621,26 +668,34 @@ export default function FleetPage({ vehiclesData, initialVehicleId, onClearSelec
                 <button className="text-blue-600 text-xs font-black uppercase tracking-widest hover:underline">View All Records</button>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-700">
-                      <th className="pb-4 px-2 text-blue-600">Date</th>
-                      <th className="pb-4 px-2">Operation Details</th>
-                      <th className="pb-4 px-2">Cost (USD)</th>
-                      <th className="pb-4 px-2">Technician</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {selectedVehicle.repairHistory?.map((entry, idx) => (
-                      <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition">
-                        <td className="py-5 px-2 font-bold text-slate-800 whitespace-nowrap">{entry.date}</td>
-                        <td className="py-5 px-2 font-black text-slate-900">{entry.task}</td>
-                        <td className="py-5 px-2 font-bold text-slate-500">{entry.cost}</td>
-                        <td className="py-5 px-2 font-bold text-blue-600">{entry.technician}</td>
+                {historyLoading ? (
+                  <div className="p-10 text-center text-slate-500">Loading maintenance history...</div>
+                ) : historyError ? (
+                  <div className="p-10 text-center text-red-500">{historyError}</div>
+                ) : serviceHistory.length === 0 ? (
+                  <div className="p-10 text-center text-slate-500">No maintenance records found for this vehicle.</div>
+                ) : (
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-700">
+                        <th className="pb-4 px-2 text-blue-600">Date</th>
+                        <th className="pb-4 px-2">Service Type</th>
+                        <th className="pb-4 px-2">Cost (USD)</th>
+                        <th className="pb-4 px-2">Workshop</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="text-sm">
+                      {serviceHistory.map((entry, idx) => (
+                        <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-800 transition">
+                          <td className="py-5 px-2 font-bold text-slate-800 whitespace-nowrap">{entry.date}</td>
+                          <td className="py-5 px-2 font-black text-slate-900">{entry.serviceType}</td>
+                          <td className="py-5 px-2 font-bold text-slate-500">{entry.cost}</td>
+                          <td className="py-5 px-2 font-bold text-blue-600">{entry.workshop}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           </div>
