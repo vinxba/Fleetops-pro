@@ -1,17 +1,107 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Download, Filter, MoreVertical, Package, X, CheckCircle2, AlertTriangle, Clock, History, Truck } from 'lucide-react';
 
 export default function PartsPage({ onVehicleClick }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState('ALL');
+  const [partsData, setPartsData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [newPart, setNewPart] = useState({
+    part_number: '',
+    part_name: '',
+    category: '',
+    description: '',
+    stock_quantity: '',
+    minimum_stock: '',
+    unit_price: '',
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
-  const partsData = [
-    { id: 'P-101', name: 'Brake Pads (Front)', category: 'Brakes', stock: 12, price: '$45.00', status: 'IN STOCK' },
-    { id: 'P-102', name: 'Oil Filter', category: 'Engine', stock: 5, price: '$15.00', status: 'LOW STOCK' },
-    { id: 'P-103', name: 'Air Intake Filter', category: 'Engine', stock: 24, price: '$22.00', status: 'IN STOCK' },
-    { id: 'P-104', name: 'Wiper Blades', category: 'Exterior', stock: 0, price: '$12.00', status: 'OUT OF STOCK' },
-  ];
+  const fetchParts = async (signal) => {
+    setIsLoading(true);
+    setFetchError(null);
+
+    try {
+      const response = await fetch('https://nventro-backend-c532.onrender.com/api/parts/', {
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch parts (${response.status})`);
+      }
+
+      const data = await response.json();
+      const transformed = data.map((item) => ({
+        id: item.part_number || item.id,
+        name: item.part_name || item.name || 'Unknown Part',
+        category: item.category || 'N/A',
+        stock: item.stock_quantity ?? 0,
+        price: item.unit_price ? `$${parseFloat(item.unit_price).toFixed(2)}` : '$0.00',
+        status: item.status ? item.status.replace(/_/g, ' ') : 'UNKNOWN',
+      }));
+
+      setPartsData(transformed);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        setFetchError(error.message || 'Unable to load parts data.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchParts(controller.signal);
+    return () => controller.abort();
+  }, []);
+
+  const handleAddPartSubmit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const response = await fetch('https://nventro-backend-c532.onrender.com/api/parts/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          part_number: newPart.part_number,
+          part_name: newPart.part_name,
+          category: newPart.category,
+          description: newPart.description,
+          stock_quantity: parseInt(newPart.stock_quantity, 10) || 0,
+          minimum_stock: parseInt(newPart.minimum_stock, 10) || 0,
+          unit_price: newPart.unit_price,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to add part (${response.status})`);
+      }
+
+      setNewPart({
+        part_number: '',
+        part_name: '',
+        category: '',
+        description: '',
+        stock_quantity: '',
+        minimum_stock: '',
+        unit_price: '',
+      });
+      setIsAddModalOpen(false);
+      await fetchParts();
+    } catch (error) {
+      setSaveError(error.message || 'Unable to add part.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const usageHistory = [
     { part: 'Heavy Duty Tires', vehicle: 'Land Cruiser 79', date: 'Oct 24, 2024', qty: 2, tech: 'Tech-04' },
@@ -23,6 +113,8 @@ export default function PartsPage({ onVehicleClick }) {
   const totalParts = partsData.length;
   const inStockCount = partsData.filter(p => p.status === 'IN STOCK').length;
   const lowStockCount = partsData.filter(p => p.status === 'LOW STOCK' || p.status === 'OUT OF STOCK').length;
+  const inStockPercent = totalParts ? (inStockCount / totalParts) * 100 : 0;
+  const lowStockPercent = totalParts ? (lowStockCount / totalParts) * 100 : 0;
 
   const filterTabs = [
     { label: 'ALL', value: 'ALL' },
@@ -88,7 +180,7 @@ export default function PartsPage({ onVehicleClick }) {
             <span className="text-xs font-bold text-slate-400 ml-2">Available</span>
           </div>
           <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-5 overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${(inStockCount / totalParts) * 100}%` }}></div>
+            <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${inStockPercent}%` }}></div>
           </div>
         </div>
 
@@ -102,7 +194,7 @@ export default function PartsPage({ onVehicleClick }) {
             <span className="text-xs font-bold text-slate-400 ml-2">Low / Empty</span>
           </div>
           <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-5 overflow-hidden">
-            <div className="bg-red-500 h-full rounded-full" style={{ width: `${(lowStockCount / totalParts) * 100}%` }}></div>
+            <div className="bg-red-500 h-full rounded-full" style={{ width: `${lowStockPercent}%` }}></div>
           </div>
         </div>
       </div>
@@ -148,50 +240,56 @@ export default function PartsPage({ onVehicleClick }) {
         <div className="xl:col-span-2">
           <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden h-full">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/50 dark:bg-slate-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-700">
-                    <th className="py-4 px-6">Part Information</th>
-                    <th className="py-4 px-6">Category</th>
-                    <th className="py-4 px-6">Stock Level</th>
-                    <th className="py-4 px-6">Unit Price</th>
-                    <th className="py-4 px-6">Status</th>
-                    <th className="py-4 px-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-600">
-                  {filteredParts.map((part, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition group">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-slate-950 group-hover:text-white transition-colors">
-                            <Package size={16} />
-                          </div>
-                          <div>
-                            <div className="text-slate-900 font-bold">{part.name}</div>
-                            <div className="text-[10px] text-slate-400 uppercase tracking-widest">{part.id}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6 text-slate-500 uppercase text-[10px] tracking-wider">{part.category}</td>
-                      <td className="py-4 px-6 font-bold text-slate-700">{part.stock} Units</td>
-                      <td className="py-4 px-6 font-bold text-slate-900">{part.price}</td>
-                      <td className="py-4 px-6">
-                        <span className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-wider uppercase ${
-                          part.status === 'IN STOCK' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                          part.status === 'LOW STOCK' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                          'bg-red-50 text-red-600 border border-red-100'
-                        }`}>
-                          {part.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        <button className="text-slate-400 hover:text-slate-600 transition cursor-pointer"><MoreVertical size={16} /></button>
-                      </td>
+              {isLoading ? (
+                <div className="p-10 text-center text-slate-500">Loading parts...</div>
+              ) : fetchError ? (
+                <div className="p-10 text-center text-red-500">{fetchError}</div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 dark:bg-slate-800/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-700">
+                      <th className="py-4 px-6">Part Information</th>
+                      <th className="py-4 px-6">Category</th>
+                      <th className="py-4 px-6">Stock Level</th>
+                      <th className="py-4 px-6">Unit Price</th>
+                      <th className="py-4 px-6">Status</th>
+                      <th className="py-4 px-6 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-600">
+                    {filteredParts.map((part, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition group">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-slate-950 group-hover:text-white transition-colors">
+                              <Package size={16} />
+                            </div>
+                            <div>
+                              <div className="text-slate-900 font-bold">{part.name}</div>
+                              <div className="text-[10px] text-slate-400 uppercase tracking-widest">{part.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-slate-500 uppercase text-[10px] tracking-wider">{part.category}</td>
+                        <td className="py-4 px-6 font-bold text-slate-700">{part.stock} Units</td>
+                        <td className="py-4 px-6 font-bold text-slate-900">{part.price}</td>
+                        <td className="py-4 px-6">
+                          <span className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-wider uppercase ${
+                            part.status === 'IN STOCK' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                            part.status === 'LOW STOCK' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                            'bg-red-50 text-red-600 border border-red-100'
+                          }`}>
+                            {part.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <button className="text-slate-400 hover:text-slate-600 transition cursor-pointer"><MoreVertical size={16} /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>
@@ -225,7 +323,7 @@ export default function PartsPage({ onVehicleClick }) {
               ))}
             </div>
             
-            <button className="w-full mt-8 py-3.5 bg-slate-50 dark:bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-100 dark:bg-slate-800 transition cursor-pointer">
+            <button className="w-full mt-8 py-3.5 bg-slate-50 dark:bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-100 transition cursor-pointer">
               View Full Usage Log
             </button>
           </div>
@@ -247,23 +345,103 @@ export default function PartsPage({ onVehicleClick }) {
                 </button>
               </div>
 
-              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setIsAddModalOpen(false); }}>
+              <form className="space-y-4" onSubmit={handleAddPartSubmit}>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Part Number</label>
+                  <input
+                    type="text"
+                    value={newPart.part_number}
+                    onChange={(e) => setNewPart((prev) => ({ ...prev, part_number: e.target.value }))}
+                    placeholder="1234"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition"
+                    required
+                  />
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Part Name</label>
-                  <input type="text" placeholder="e.g. Brake Pads (Front)" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                  <input
+                    type="text"
+                    value={newPart.part_name}
+                    onChange={(e) => setNewPart((prev) => ({ ...prev, part_name: e.target.value }))}
+                    placeholder="Oil"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition"
+                    required
+                  />
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">SKU / ID</label>
-                    <input type="text" placeholder="SKU-8822" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
+                    <input
+                      type="text"
+                      value={newPart.category}
+                      onChange={(e) => setNewPart((prev) => ({ ...prev, category: e.target.value }))}
+                      placeholder="OIL"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition"
+                      required
+                    />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Price (Unit)</label>
-                    <input type="number" step="0.01" placeholder="0.00" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition" required />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Description</label>
+                    <input
+                      type="text"
+                      value={newPart.description}
+                      onChange={(e) => setNewPart((prev) => ({ ...prev, description: e.target.value }))}
+                      placeholder="OIL"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition"
+                      required
+                    />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Stock Quantity</label>
+                    <input
+                      type="number"
+                      value={newPart.stock_quantity}
+                      onChange={(e) => setNewPart((prev) => ({ ...prev, stock_quantity: e.target.value }))}
+                      placeholder="150"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Minimum Stock</label>
+                    <input
+                      type="number"
+                      value={newPart.minimum_stock}
+                      onChange={(e) => setNewPart((prev) => ({ ...prev, minimum_stock: e.target.value }))}
+                      placeholder="5"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Unit Price</label>
+                  <input
+                    type="text"
+                    value={newPart.unit_price}
+                    onChange={(e) => setNewPart((prev) => ({ ...prev, unit_price: e.target.value }))}
+                    placeholder="50.00"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition"
+                    required
+                  />
+                </div>
+
+                {saveError && <div className="text-sm text-red-500">{saveError}</div>}
+
                 <div className="pt-6 flex space-x-3">
-                  <button type="submit" className="flex-1 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition active:scale-95 cursor-pointer">Add Part</button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="flex-1 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition active:scale-95 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSaving ? 'Adding...' : 'Add Part'}
+                  </button>
                 </div>
               </form>
             </div>
