@@ -18,6 +18,11 @@ export default function ServiceEntry() {
     vehicle_downtime_days: '',
     remarks: '',
   });
+  const [serviceParts, setServiceParts] = useState([
+    { part: '', quantity: '', unit_price: '', total_price: '' },
+  ]);
+  const [partsList, setPartsList] = useState([]);
+  const [partsStatus, setPartsStatus] = useState({ loading: true, error: null });
   const [formStatus, setFormStatus] = useState({ success: null, error: null, saving: false });
   const [vehicles, setVehicles] = useState([]);
   const [vehiclesStatus, setVehiclesStatus] = useState({ loading: true, error: null });
@@ -43,7 +48,26 @@ export default function ServiceEntry() {
       }
     }
 
+    async function loadParts() {
+      setPartsStatus({ loading: true, error: null });
+      try {
+        const response = await fetch('https://nventro-backend-c532.onrender.com/api/parts/', {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`Unable to load parts (${response.status})`);
+        const data = await response.json();
+        setPartsList(data);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setPartsStatus({ loading: false, error: err.message || 'Unable to load parts.' });
+        }
+      } finally {
+        setPartsStatus((prev) => ({ ...prev, loading: false }));
+      }
+    }
+
     loadVehicles();
+    loadParts();
     return () => controller.abort();
   }, []);
 
@@ -59,7 +83,31 @@ export default function ServiceEntry() {
     if (!serviceForm.service_date) errors.push('Enter a service date.');
     if (!serviceForm.odometer_reading) errors.push('Enter an odometer reading.');
     if (!serviceForm.estimated_cost) errors.push('Enter an estimated cost.');
+
+    serviceParts.forEach((partLine, index) => {
+      if (partLine.part && !partLine.quantity) {
+        errors.push(`Enter quantity for part row ${index + 1}.`);
+      }
+    });
+
     return errors;
+  };
+
+  const createPartsPayload = (serviceId) => {
+    return serviceParts
+      .filter((item) => item.part)
+      .map((item) => {
+        const quantity = item.quantity ? Number(item.quantity) : null;
+        const unitPrice = item.unit_price ? parseFloat(item.unit_price).toFixed(2) : '0.00';
+
+        return {
+          service: serviceId,
+          part: Number(item.part) || null,
+          quantity,
+          unit_price: unitPrice,
+        };
+      })
+      .filter((item) => item.part && item.quantity !== null);
   };
 
   const handleSubmit = async (e) => {
@@ -117,7 +165,40 @@ export default function ServiceEntry() {
         );
       }
 
-      console.log('Service create response:', responseData || responseText);
+      const createdService = responseData;
+      console.log('Service create response:', createdService);
+
+      const partsPayload = createPartsPayload(createdService.id);
+      if (partsPayload.length) {
+        console.log('Posting service parts payload:', partsPayload);
+        for (const partItem of partsPayload) {
+          const partsResponse = await fetch('https://nventro-backend-c532.onrender.com/api/service-parts/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(partItem),
+          });
+
+          const partsResponseText = await partsResponse.text();
+          let partsResponseData = null;
+          try {
+            partsResponseData = JSON.parse(partsResponseText);
+          } catch (_) {
+            partsResponseData = null;
+          }
+
+          console.log('Service parts response status:', partsResponse.status, partsResponse.statusText);
+          console.log('Service parts response text:', partsResponseText);
+
+          if (!partsResponse.ok) {
+            throw new Error(
+              partsResponseData?.detail || partsResponseData?.message || partsResponseText || `Service parts request failed (${partsResponse.status})`
+            );
+          }
+        }
+      }
+
       setFormStatus({ success: 'Service record saved successfully.', error: null, saving: false });
       setServiceForm({
         vehicle: '',
@@ -135,6 +216,7 @@ export default function ServiceEntry() {
         vehicle_downtime_days: '',
         remarks: '',
       });
+      setServiceParts([{ part: '', quantity: '', unit_price: '', total_price: '' }]);
     } catch (error) {
       setFormStatus({ success: null, error: error.message || 'Unable to save service record.', saving: false });
     } finally {
@@ -331,6 +413,107 @@ export default function ServiceEntry() {
                   </label>
                 ))}
               </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Service Parts</h4>
+                  <p className="text-[10px] text-slate-400">Add parts used for this service and their quantities.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setServiceParts((prev) => [...prev, { part: '', quantity: '', unit_price: '', total_price: '' }])}
+                  className="rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-700 hover:bg-white dark:hover:bg-slate-800 transition"
+                >
+                  Add Row
+                </button>
+              </div>
+              {serviceParts.map((partLine, index) => {
+                const selectedPart = partsList.find((p) => String(p.id) === String(partLine.part));
+                const computedUnitPrice = partLine.unit_price || selectedPart?.unit_price || '0.00';
+                const quantityNumber = Number(partLine.quantity) || 0;
+                const totalPrice = (parseFloat(computedUnitPrice) * quantityNumber).toFixed(2);
+
+                return (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Part</label>
+                      <select
+                        value={partLine.part}
+                        onChange={(e) => {
+                          const updated = [...serviceParts];
+                          updated[index].part = e.target.value;
+                          if (!updated[index].unit_price) {
+                            const partData = partsList.find((part) => String(part.id) === e.target.value);
+                            updated[index].unit_price = partData?.unit_price || '';
+                          }
+                          setServiceParts(updated);
+                        }}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                      >
+                        <option value="">Select Part</option>
+                        {partsList.map((part) => (
+                          <option key={part.id} value={part.id}>
+                            {part.part_number ? `${part.part_number} - ${part.part_name}` : part.part_name || part.name || `Part #${part.id}`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Quantity</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={partLine.quantity}
+                        onChange={(e) => {
+                          const updated = [...serviceParts];
+                          updated[index].quantity = e.target.value;
+                          updated[index].total_price = (parseFloat(updated[index].unit_price || computedUnitPrice || '0') * (Number(e.target.value) || 0)).toFixed(2);
+                          setServiceParts(updated);
+                        }}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none"
+                        placeholder="Qty"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Unit Price</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">$</span>
+                        <input
+                          type="text"
+                          value={partLine.unit_price || selectedPart?.unit_price || ''}
+                          onChange={(e) => {
+                            const updated = [...serviceParts];
+                            updated[index].unit_price = e.target.value;
+                            updated[index].total_price = (parseFloat(e.target.value || '0') * quantityNumber).toFixed(2);
+                            setServiceParts(updated);
+                          }}
+                          placeholder="0.00"
+                          className="w-full pl-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Total Price</label>
+                      <input
+                        type="text"
+                        value={partLine.total_price || totalPrice}
+                        readOnly
+                        className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs font-semibold text-slate-700 outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setServiceParts((prev) => prev.filter((_, i) => i !== index))}
+                      className="text-red-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-6"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
+              {partsStatus.error && <p className="text-[10px] text-red-500">{partsStatus.error}</p>}
             </div>
           </div>
 

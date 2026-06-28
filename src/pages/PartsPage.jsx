@@ -19,6 +19,9 @@ export default function PartsPage({ onVehicleClick }) {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [servicePartsHistory, setServicePartsHistory] = useState([]);
+  const [servicePartsError, setServicePartsError] = useState(null);
+  const [servicePartsLoading, setServicePartsLoading] = useState(true);
 
   const fetchParts = async (signal) => {
     setIsLoading(true);
@@ -56,8 +59,33 @@ export default function PartsPage({ onVehicleClick }) {
   useEffect(() => {
     const controller = new AbortController();
     fetchParts(controller.signal);
+    fetchServicePartsHistory(controller.signal);
     return () => controller.abort();
   }, []);
+
+  const fetchServicePartsHistory = async (signal) => {
+    setServicePartsLoading(true);
+    setServicePartsError(null);
+
+    try {
+      const response = await fetch('https://nventro-backend-c532.onrender.com/api/service-parts/', {
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch service-part history (${response.status})`);
+      }
+
+      const data = await response.json();
+      setServicePartsHistory(data);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        setServicePartsError(error.message || 'Unable to load service-part history.');
+      }
+    } finally {
+      setServicePartsLoading(false);
+    }
+  };
 
   const handleAddPartSubmit = async (e) => {
     e.preventDefault();
@@ -102,12 +130,6 @@ export default function PartsPage({ onVehicleClick }) {
       setIsSaving(false);
     }
   };
-
-  const usageHistory = [
-    { part: 'Heavy Duty Tires', vehicle: 'Land Cruiser 79', date: 'Oct 24, 2024', qty: 2, tech: 'Tech-04' },
-    { part: 'Oil Filter (Synthetic)', vehicle: 'Mitsubishi L200', date: 'Oct 22, 2024', qty: 1, tech: 'Tech-01' },
-    { part: 'Brake Pad Kit', vehicle: 'Commercial Van', date: 'Oct 20, 2024', qty: 1, tech: 'Tech-09' },
-  ];
 
   // Calculate metrics for the header cards
   const totalParts = partsData.length;
@@ -305,22 +327,30 @@ export default function PartsPage({ onVehicleClick }) {
             </div>
             
             <div className="space-y-6">
-              {usageHistory.map((item, idx) => (
-                <div 
-                  key={idx} 
-                  onClick={() => onVehicleClick?.(item.vehicle)}
-                  className="relative pl-6 border-l-2 border-slate-100 dark:border-slate-700 pb-1 cursor-pointer group/item hover:border-blue-500 transition-colors"
-                >
-                  <div className="absolute -left-2.25 top-0 w-4 h-4 bg-white border-2 border-blue-500 rounded-full"></div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{item.date}</span>
-                  <h4 className="font-bold text-sm text-slate-800 leading-tight group-hover/item:text-blue-600 transition-colors">{item.part}</h4>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <Truck size={12} className="text-blue-500" />
-                    <span className="text-[11px] font-bold text-slate-500 uppercase">{item.vehicle}</span>
+              {servicePartsLoading ? (
+                <div className="p-6 text-sm text-slate-500">Loading service-part history...</div>
+              ) : servicePartsError ? (
+                <div className="p-6 text-sm text-red-500">{servicePartsError}</div>
+              ) : servicePartsHistory.length === 0 ? (
+                <div className="p-6 text-sm text-slate-500">No service part history available.</div>
+              ) : (
+                servicePartsHistory.map((item, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => onVehicleClick?.(item.vehicle)}
+                    className="relative pl-6 border-l-2 border-slate-100 dark:border-slate-700 pb-1 cursor-pointer group/item hover:border-blue-500 transition-colors"
+                  >
+                    <div className="absolute -left-2.25 top-0 w-4 h-4 bg-white border-2 border-blue-500 rounded-full"></div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{item.date}</span>
+                    <h4 className="font-bold text-sm text-slate-800 leading-tight group-hover/item:text-blue-600 transition-colors">{item.part}</h4>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Truck size={12} className="text-blue-500" />
+                      <span className="text-[11px] font-bold text-slate-500 uppercase">{item.vehicle}</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Qty: {item.qty} • Logged by {item.tech}</p>
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Qty: {item.qty} • Logged by {item.tech}</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             
             <button className="w-full mt-8 py-3.5 bg-slate-50 dark:bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-100 transition cursor-pointer">
